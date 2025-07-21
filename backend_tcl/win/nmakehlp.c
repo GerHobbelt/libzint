@@ -12,7 +12,9 @@
  * ----------------------------------------------------------------------------
  */
 
+#ifndef _CRT_SECURE_NO_DEPRECATE
 #define _CRT_SECURE_NO_DEPRECATE
+#endif
 #include <windows.h>
 #ifdef _MSC_VER
 #pragma comment (lib, "user32.lib")
