@@ -18,7 +18,7 @@
 #include <string.h>
 #include <math.h>
 
-void print_head(char upc_number[]) {
+static void print_head(char upc_number[]) {
     printf("<?xml version=\"1.0\" standalone=\"no\"?>\n");
     printf("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"\n");
     printf("   \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n");
@@ -29,7 +29,7 @@ void print_head(char upc_number[]) {
     printf("        <rect x=\"0\" y=\"0\" width=\"100\" height=\"100\" fill=\"#ffffff\" />\n");
 }
 
-void print_foot() {
+static void print_foot(void) {
     printf("    </g>\n");
     printf("</svg>\n");
 }
@@ -41,7 +41,7 @@ static const char *torrey[11] = {
             // In these codes 0 is dark and 1 is light
 };
 
-int main(int argc, char** argv) {
+int main(int argc, const char** argv) {
 
     int in_length;
     char upc_number[12];

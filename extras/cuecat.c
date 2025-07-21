@@ -38,7 +38,7 @@ static const char *C128Table[107] = {
     "2331112"
 };
 
-void print_head(char cat_number[]) {
+static void print_head(char cat_number[]) {
     printf("<?xml version=\"1.0\" standalone=\"no\"?>\n");
     printf("<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\"\n");
     printf("   \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n");
@@ -49,7 +49,7 @@ void print_head(char cat_number[]) {
     printf("        <rect x=\"0\" y=\"0\" width=\"149.60\" height=\"36.00\" fill=\"#ffffff\" />\n");
 }
 
-void print_cue() {
+static void print_cue(void) {
     /* Just dots and triangles as the :C symbol may still be a trademark */
     printf("        <circle cx=\"7.00\" cy=\"12.50\" r=\"3.50\" fill=\"red\" />\n");
     printf("        <circle cx=\"7.00\" cy=\"23.50\" r=\"3.50\" fill=\"red\" />\n");
@@ -57,7 +57,7 @@ void print_cue() {
     printf("        <polygon points=\"134.00,4.00 145.60,4.00 145.60,32.00\" />\n");
 }
 
-void print_data(char pattern[]) {
+static void print_data(char pattern[]) {
     /* Output the lines of the barcode at an attractive 22.5 degree angle */
     double posn = 24;
     int length = strlen(pattern);
@@ -72,7 +72,7 @@ void print_data(char pattern[]) {
     }
 }
 
-void print_hrt(char cat_number[]) {
+static void print_hrt(char cat_number[]) {
     /* Put readable text at the bottom of the symbol */
     char hrt[25];
     int i, j;
@@ -92,12 +92,12 @@ void print_hrt(char cat_number[]) {
     printf("        <text x=\"58.00\" y=\"32.00\" font-family=\"Verdana\" font-size=\"5\">%s</text>\n", hrt);
 }
 
-void print_foot() {
+static void print_foot(void) {
     printf("    </g>\n");
     printf("</svg>\n");
 }
 
-int main(int argc, char** argv) {
+int main(int argc, const char** argv) {
     int in_length;
     char cat_number[16];
     char pattern[90];
