@@ -31,7 +31,7 @@
 
 #include "testcommon.h"
 #include <errno.h>
-#include <zlib.h> /* For ZLIBNG_VERSION define (if any) */
+#include <zlib-ng.h> /* For ZLIBNG_VERSION define (if any) */
 #include <sys/stat.h>
 
 INTERNAL int png_pixel_plot(struct zint_symbol *symbol, unsigned char *pixelbuf);

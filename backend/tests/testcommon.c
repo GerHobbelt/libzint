@@ -41,7 +41,7 @@
 #endif
 #ifndef ZINT_NO_PNG
 #include <png.h>
-#include <zlib.h>
+#include <zlib-ng.h>
 #include <setjmp.h>
 #endif
 #include <assert.h>

@@ -31,7 +31,7 @@
 
 #include "testcommon.h"
 #ifndef ZINT_NO_PNG
-#include <zlib.h> /* For ZLIBNG_VERSION define (if any) */
+#include <zlib-ng.h> /* For ZLIBNG_VERSION define (if any) */
 #endif
 #include <sys/stat.h>
 

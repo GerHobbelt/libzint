@@ -36,7 +36,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <png.h>
-#include <zlib.h>
+#include <zlib-ng.h>
 #include <setjmp.h>
 #include "common.h"
 #include "filemem.h"
