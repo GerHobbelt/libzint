@@ -220,9 +220,9 @@ static void test_hrt(const testCtx *const p_ctx) {
         /*  6*/ { BARCODE_CODE128, UNICODE_MODE, -1, -1, "12345\01167890\037\177", -1, "12345 67890  ", -1, "", -1, 1 },
         /*  7*/ { BARCODE_CODE128, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "12345\01167890\037\177", -1, "12345 67890  ", -1, "12345\01167890\037\177", -1, 1 },
         /*  8*/ { BARCODE_CODE128, UNICODE_MODE, -1, -1, "abcdé", -1, "abcdé", -1, "", -1, 1 },
-        /*  9*/ { BARCODE_CODE128, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "abcdé", -1, "abcdé", -1, "abcd\351", -1, 1 },
+        /*  9*/ { BARCODE_CODE128, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "abcdé", -1, "abcdé", -1, "abcdé", -1, 1 }, /* Now UTF-8, not converted */
         /* 10*/ { BARCODE_CODE128, UNICODE_MODE, -1, -1, "abcdé\302\240", -1, "abcdé\302\240", -1, "", -1, 1 }, /* \302\240 (U+A0) NBSP */
-        /* 11*/ { BARCODE_CODE128, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "abcdé\302\240", -1, "abcdé\302\240", -1, "abcd\351\240", -1, 1 },
+        /* 11*/ { BARCODE_CODE128, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "abcdé\302\240", -1, "abcdé\302\240", -1, "abcdé\302\240", -1, 1 },
         /* 12*/ { BARCODE_CODE128, DATA_MODE, -1, -1, "abcd\351", -1, "abcdé", -1, "", -1, 899 },
         /* 13*/ { BARCODE_CODE128, DATA_MODE, -1, BARCODE_RAW_TEXT, "abcd\351", -1, "abcdé", -1, "abcd\351", -1, 899 },
         /* 14*/ { BARCODE_CODE128, DATA_MODE, -1, -1, "ab\240cd\351", -1, "ab\302\240cdé", -1, "", -1, 899 }, /* \240 (U+A0) NBSP */
@@ -232,7 +232,7 @@ static void test_hrt(const testCtx *const p_ctx) {
         /* 18*/ { BARCODE_CODE128, EXTRA_ESCAPE_MODE, -1, -1, "\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C123456789012345678", -1, "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678", -1, "", -1, 1 }, /* Max length 198 + 19 special escapes = 99 + 19*3 = 255 */
         /* 19*/ { BARCODE_CODE128, EXTRA_ESCAPE_MODE, -1, BARCODE_RAW_TEXT, "\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C1234567890\\^C123456789012345678", -1, "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678", -1, "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678", -1, 1 },
         /* 20*/ { BARCODE_CODE128AB, UNICODE_MODE, -1, -1, "abcdé", -1, "abcdé", -1, "", -1, 1 },
-        /* 21*/ { BARCODE_CODE128AB, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "abcdé", -1, "abcdé", -1, "abcd\351", -1, 1 },
+        /* 21*/ { BARCODE_CODE128AB, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "abcdé", -1, "abcdé", -1, "abcdé", -1, 1 },
         /* 22*/ { BARCODE_CODE128AB, DATA_MODE, -1, -1, "abcd\351", -1, "abcdé", -1, "", -1, 899 },
         /* 23*/ { BARCODE_CODE128AB, DATA_MODE, -1, BARCODE_RAW_TEXT, "abcd\351", -1, "abcdé", -1, "abcd\351", -1, 899 },
         /* 24*/ { BARCODE_HIBC_128, UNICODE_MODE, -1, -1, "1234567890", -1, "*+12345678900*", -1, "", -1, 1 },
@@ -1301,10 +1301,10 @@ static void test_upu_s10_input(const testCtx *const p_ctx) {
     static const struct item data[] = {
         /*  0*/ { "AB123456789ABC", ZINT_ERROR_TOO_LONG, 0, "Error 834: Input length 14 wrong (12 or 13 characters required)", "" },
         /*  1*/ { "AB1234567AB", ZINT_ERROR_TOO_LONG, 0, "Error 834: Input length 11 wrong (12 or 13 characters required)", "" },
-        /*  2*/ { "1B123456789AB", ZINT_ERROR_INVALID_DATA, 0, "Error 835: Invalid character in Service Indictor (first 2 characters) (alphabetic only)", "" },
-        /*  3*/ { "1B12345678AB", ZINT_ERROR_INVALID_DATA, 0, "Error 835: Invalid character in Service Indictor (first 2 characters) (alphabetic only)", "" },
-        /*  4*/ { "A2123456789AB", ZINT_ERROR_INVALID_DATA, 0, "Error 835: Invalid character in Service Indictor (first 2 characters) (alphabetic only)", "" },
-        /*  5*/ { "A212345678AB", ZINT_ERROR_INVALID_DATA, 0, "Error 835: Invalid character in Service Indictor (first 2 characters) (alphabetic only)", "" },
+        /*  2*/ { "1B123456789AB", ZINT_ERROR_INVALID_DATA, 0, "Error 835: Invalid character in Service Indicator (first 2 characters) (alphabetic only)", "" },
+        /*  3*/ { "1B12345678AB", ZINT_ERROR_INVALID_DATA, 0, "Error 835: Invalid character in Service Indicator (first 2 characters) (alphabetic only)", "" },
+        /*  4*/ { "A2123456789AB", ZINT_ERROR_INVALID_DATA, 0, "Error 835: Invalid character in Service Indicator (first 2 characters) (alphabetic only)", "" },
+        /*  5*/ { "A212345678AB", ZINT_ERROR_INVALID_DATA, 0, "Error 835: Invalid character in Service Indicator (first 2 characters) (alphabetic only)", "" },
         /*  6*/ { "ABX23456789AB", ZINT_ERROR_INVALID_DATA, 0, "Error 836: Invalid character in Serial Number (middle 9 characters) (digits only)", "" },
         /*  7*/ { "AB12345678XAB", ZINT_ERROR_INVALID_DATA, 0, "Error 836: Invalid character in Serial Number (middle 9 characters) (digits only)", "" },
         /*  8*/ { "ABX2345678AB", ZINT_ERROR_INVALID_DATA, 0, "Error 836: Invalid character in Serial Number (middle 8 characters) (digits only)", "" },

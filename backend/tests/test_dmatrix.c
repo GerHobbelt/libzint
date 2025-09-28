@@ -688,7 +688,7 @@ static void test_options(const testCtx *const p_ctx) {
         /* 81*/ { BARCODE_DATAMATRIX, GS1_MODE | GS1PARENS_MODE, -1, -1, -1, -1, { 0, 0, "" }, "(90)12", 0, 10, 10, "", 1, 1, "" },
         /* 82*/ { BARCODE_DATAMATRIX, GS1_MODE, -1, -1, -1, -1, { 0, 0, "" }, "[90](", 0, 10, 10, "", 1, 1, "" },
         /* 83*/ { BARCODE_DATAMATRIX, GS1_MODE | GS1PARENS_MODE, -1, -1, -1, -1, { 0, 0, "" }, "(90)(", ZINT_ERROR_INVALID_DATA, -1, -1, "Error 253: Malformed AI in input (brackets don't match)", 0, 1, "" },
-        /* 84*/ { BARCODE_DATAMATRIX, GS1_MODE | GS1PARENS_MODE, -1, -1, -1, -1, { 0, 0, "" }, "(90)\\(", ZINT_ERROR_INVALID_DATA, -1, -1, "Error 253: Malformed AI in input (brackets don't match)", 0, 1, "" },
+        /* 84*/ { BARCODE_DATAMATRIX, GS1_MODE | GS1PARENS_MODE, -1, -1, -1, -1, { 0, 0, "" }, "(90)\\(", 0, 10, 10, "", 1, 1, "" }, /* Escaped parens now work without ESCAPE_MODE */
         /* 85*/ { BARCODE_DATAMATRIX, GS1_MODE | ESCAPE_MODE | GS1PARENS_MODE, -1, -1, -1, -1, { 0, 0, "" }, "(90)\\(", 0, 10, 10, "", 1, 1, "" },
         /* 86*/ { BARCODE_DATAMATRIX, -1, -1, -1, -1, -1, { 1, 2, "" }, "1", 0, 12, 12, "", 2, 1, "" },
         /* 87*/ { BARCODE_DATAMATRIX, -1, -1, -1, -1, -1, { 16, 16, "" }, "1", 0, 12, 12, "", 2, 1, "" },
@@ -1319,8 +1319,7 @@ static void test_input(const testCtx *const p_ctx) {
                                 i, expected_rows_width, prev_expected_rows_width);
 
                     if ((data[i].input_mode & 0x07) == GS1_MODE) {
-                        int data_len = length;
-                        ret = zint_gs1_verify(symbol, ZUCP(data[i].data), &data_len, reduced, &length);
+                        ret = zint_gs1_verify(symbol, ZUCP(data[i].data), length, reduced, &length);
                         assert_zero(ret, "i:%d zint_gs1_verify() ret %d != 0 (%s)\n", i, ret, symbol->errtxt);
                         text = reduced;
                     } else {
@@ -6415,9 +6414,9 @@ static void test_rt(const testCtx *const p_ctx) {
     /* s/\/\*[ 0-9]*\*\//\=printf("\/\*%3d*\/", line(".") - line("'<")): */
     static const struct item data[] = {
         /*  0*/ { BARCODE_DATAMATRIX, UNICODE_MODE, -1, -1, "é", -1, 0, 0, "", -1, 0 },
-        /*  1*/ { BARCODE_DATAMATRIX, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "é", -1, 0, 0, "\351", -1, 3 },
+        /*  1*/ { BARCODE_DATAMATRIX, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "é", -1, 0, 0, "é", -1, 3 }, /* Now UTF-8, not converted */
         /*  2*/ { BARCODE_DATAMATRIX, UNICODE_MODE, -1, -1, "ก", -1, ZINT_WARN_USES_ECI, 13, "", -1, 0 },
-        /*  3*/ { BARCODE_DATAMATRIX, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "ก", -1, ZINT_WARN_USES_ECI, 13, "\241", -1, 13 },
+        /*  3*/ { BARCODE_DATAMATRIX, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "ก", -1, ZINT_WARN_USES_ECI, 13, "ก", -1, 13 },
         /*  4*/ { BARCODE_DATAMATRIX, UNICODE_MODE | ESCAPE_MODE, -1, -1, "[)>\\R05\\GA\\R\\E", -1, 0, 0, "", -1, 0 },
         /*  5*/ { BARCODE_DATAMATRIX, UNICODE_MODE | ESCAPE_MODE, -1, BARCODE_RAW_TEXT, "[)>\\R05\\GA\\R\\E", -1, 0, 0, "[)>\03605\035A\036\004", -1, 3 }, /* Full content including Macro05 */
         /*  6*/ { BARCODE_DATAMATRIX, DATA_MODE, -1, -1, "\351", -1, 0, 0, "", -1, 0 },
@@ -6428,8 +6427,9 @@ static void test_rt(const testCtx *const p_ctx) {
         /* 11*/ { BARCODE_DATAMATRIX, UNICODE_MODE, 899, BARCODE_RAW_TEXT, "é", -1, 0, 899, "é", -1, 899 },
         /* 12*/ { BARCODE_DATAMATRIX, GS1_MODE, -1, -1, "[01]04912345123459[15]970331[30]128[10]ABC123", -1, 0, 0, "", -1, 0 },
         /* 13*/ { BARCODE_DATAMATRIX, GS1_MODE, -1, BARCODE_RAW_TEXT, "[01]04912345123459[15]970331[30]128[10]ABC123", -1, 0, 0, "01049123451234591597033130128\03510ABC123", -1, 3 },
-        /* 14*/ { BARCODE_HIBC_DM, UNICODE_MODE, -1, -1, "H123ABC01234567890", -1, 0, 0, "", -1, 0 },
-        /* 15*/ { BARCODE_HIBC_DM, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "H123ABC01234567890", -1, 0, 0, "+H123ABC01234567890D", -1, 3 },
+        /* 14*/ { BARCODE_DATAMATRIX, GS1_MODE, 28, BARCODE_RAW_TEXT, "[01]04912345123459[15]970331[30]128[10]ABC123", -1, 0, 28, "01049123451234591597033130128\03510ABC123", -1, 3 }, /* Note: raw text ECI rremains at default 3 */
+        /* 15*/ { BARCODE_HIBC_DM, UNICODE_MODE, -1, -1, "H123ABC01234567890", -1, 0, 0, "", -1, 0 },
+        /* 16*/ { BARCODE_HIBC_DM, UNICODE_MODE, -1, BARCODE_RAW_TEXT, "H123ABC01234567890", -1, 0, 0, "+H123ABC01234567890D", -1, 3 },
     };
     const int data_size = ARRAY_SIZE(data);
     int i, length, ret;
@@ -6504,9 +6504,9 @@ static void test_rt_segs(const testCtx *const p_ctx) {
     /* s/\/\*[ 0-9]*\*\//\=printf("\/\*%3d*\/", line(".") - line("'<")): */
     static const struct item data[] = {
         /*  0*/ { UNICODE_MODE, -1, { { TU("¶"), -1, 0 }, { TU("Ж"), -1, 7 }, {0} }, 0, 14, 14, {{0}}, 0 },
-        /*  1*/ { UNICODE_MODE, BARCODE_RAW_TEXT, { { TU("¶"), -1, 0 }, { TU("Ж"), -1, 7 }, { TU(""), 0, 0 } }, 0, 14, 14, { { TU("\266"), 1, 3 }, { TU("\266"), 1, 7 }, {0} }, 2 },
+        /*  1*/ { UNICODE_MODE, BARCODE_RAW_TEXT, { { TU("¶"), -1, 0 }, { TU("Ж"), -1, 7 }, { TU(""), 0, 0 } }, 0, 14, 14, { { TU("¶"), 2, 3 }, { TU("Ж"), 2, 7 }, {0} }, 2 }, /* Now UTF-8, not converted */
         /*  2*/ { UNICODE_MODE, -1, { { TU("éé"), -1, 0 }, { TU("กขฯ"), -1, 0 }, { TU("βββ"), -1, 0 } }, ZINT_WARN_USES_ECI, 18, 18, {{0}}, 0 },
-        /*  3*/ { UNICODE_MODE, BARCODE_RAW_TEXT, { { TU("éé"), -1, 0 }, { TU("กขฯ"), -1, 0 }, { TU("βββ"), -1, 0 } }, ZINT_WARN_USES_ECI, 18, 18, { { TU("\351\351"), 2, 3 }, { TU("\241\242\317"), 3, 13 }, { TU("\342\342\342"), 3, 9 } }, 3 },
+        /*  3*/ { UNICODE_MODE, BARCODE_RAW_TEXT, { { TU("éé"), -1, 0 }, { TU("กขฯ"), -1, 0 }, { TU("βββ"), -1, 0 } }, ZINT_WARN_USES_ECI, 18, 18, { { TU("éé"), 4, 3 }, { TU("กขฯ"), 9, 13 }, { TU("βββ"), 6, 9 } }, 3 },
         /*  4*/ { DATA_MODE, -1, { { TU("¶"), -1, 26 }, { TU("Ж"), -1, 0 }, { TU("\223\137"), -1, 20 } }, 0, 18, 18, {{0}}, 0 },
         /*  5*/ { DATA_MODE, BARCODE_RAW_TEXT, { { TU("¶"), -1, 26 }, { TU("Ж"), -1, 0 }, { TU("\223\137"), -1, 20 } }, 0, 18, 18, { { TU("¶"), 2, 26 }, { TU("\320\226"), 2, 3 }, { TU("\223\137"), 2, 20 } }, 3 },
     };

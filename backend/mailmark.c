@@ -31,7 +31,7 @@
 /* SPDX-License-Identifier: BSD-3-Clause */
 
 /*
- * Developed in accordance with "Royal Mail Mailmark barcode C encoding and deconding instructions"
+ * Developed in accordance with "Royal Mail Mailmark barcode C encoding and decoding instructions"
  * (https://www.royalmail.com/sites/default/files/
  *  Mailmark-4-state-barcode-C-encoding-and-decoding-instructions-Sept-2015.pdf)
  * and "Royal Mail Mailmark barcode L encoding and decoding"
@@ -206,7 +206,7 @@ INTERNAL int zint_mailmark_4s(struct zint_symbol *symbol, unsigned char source[]
         }
         memset(local_source + length, ' ', 22 - length);
         length = 22;
-    } else if ((length > 22) && (length < 26)) {
+    } else if (length > 22 && length < 26) {
         memset(local_source + length, ' ', 26 - length);
         length = 26;
     }
@@ -224,19 +224,19 @@ INTERNAL int zint_mailmark_4s(struct zint_symbol *symbol, unsigned char source[]
 
     /* Format is in the range 0-4 */
     format = z_ctoi(local_source[0]);
-    if ((format < 0) || (format > 4)) {
+    if (format < 0 || format > 4) {
         return z_errtxt(ZINT_ERROR_INVALID_DATA, symbol, 582, "Format (1st character) out of range (0 to 4)");
     }
 
     /* Version ID is in the range 1-4 */
     version_id = z_ctoi(local_source[1]) - 1;
-    if ((version_id < 0) || (version_id > 3)) {
+    if (version_id < 0 || version_id > 3) {
         return z_errtxt(ZINT_ERROR_INVALID_DATA, symbol, 583, "Version ID (2nd character) out of range (1 to 4)");
     }
 
     /* Class is in the range 0-9,A-E */
     mail_class = z_ctoi(local_source[2]);
-    if ((mail_class < 0) || (mail_class > 14)) {
+    if (mail_class < 0 || mail_class > 14) {
         return z_errtxt(ZINT_ERROR_INVALID_DATA, symbol, 584,
                         "Class (3rd character) out of range (0 to 9 and A to E)");
     }
@@ -468,11 +468,11 @@ INTERNAL int zint_mailmark_4s(struct zint_symbol *symbol, unsigned char source[]
     /* Translate 4-state data pattern to symbol */
     j = 0;
     for (i = 0, len = d - bar; i < len; i++) {
-        if ((bar[i] == 'F') || (bar[i] == 'A')) {
+        if (bar[i] == 'F' || bar[i] == 'A') {
             z_set_module(symbol, 0, j);
         }
         z_set_module(symbol, 1, j);
-        if ((bar[i] == 'F') || (bar[i] == 'D')) {
+        if (bar[i] == 'F' || bar[i] == 'D') {
             z_set_module(symbol, 2, j);
         }
         j += 2;
@@ -518,6 +518,7 @@ INTERNAL int zint_mailmark_2d(struct zint_symbol *symbol, unsigned char source[]
     char postcode[10];
     int i;
     struct zint_seg segs[1];
+    const int raw_text = symbol->output_options & BARCODE_RAW_TEXT;
 
     if (length > 90) {
         return z_errtxtf(ZINT_ERROR_TOO_LONG, symbol, 589, "Input length %d too long (maximum 90)", length);
@@ -659,6 +660,16 @@ INTERNAL int zint_mailmark_2d(struct zint_symbol *symbol, unsigned char source[]
     segs[0].eci = 0;
     segs[0].source = local_source;
     segs[0].length = length;
+
+    if (raw_text) {
+        if ((symbol->input_mode & 0x07) == DATA_MODE) {
+            if (z_rt_cpy(symbol, local_source, length)) {
+                return ZINT_ERROR_MEMORY; /* `z_rt_cpy()` only fails with OOM */
+            }
+        } else if (z_rt_cpy_iso8859_1(symbol, local_source, length)) {
+            return ZINT_ERROR_MEMORY; /* `z_rt_cpy_iso8859_1()` only fails with OOM */
+        }
+    }
 
     return zint_datamatrix(symbol, segs, 1);
 }
