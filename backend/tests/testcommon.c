@@ -567,6 +567,7 @@ const char *testUtilInputModeName(int input_mode) {
         { "HEIGHTPERROW_MODE", HEIGHTPERROW_MODE, 0x0040 },
         { "FAST_MODE", FAST_MODE, 0x0080 },
         { "EXTRA_ESCAPE_MODE", EXTRA_ESCAPE_MODE, 0x0100 },
+        { "GS1SYNTAXENGINE_MODE", GS1SYNTAXENGINE_MODE, 0x0200 },
     };
     const int data_size = ARRAY_SIZE(data);
     int set, i;
@@ -697,7 +698,7 @@ const char *testUtilOutputOptionsName(int output_options) {
         { "EANUPC_GUARD_WHITESPACE", EANUPC_GUARD_WHITESPACE, 0x4000 },
         { "EMBED_VECTOR_FONT", EMBED_VECTOR_FONT, 0x8000 },
         { "BARCODE_MEMORY_FILE", BARCODE_MEMORY_FILE, 0x10000 },
-        { "BARCODE_RAW_TEXT", BARCODE_RAW_TEXT, 0x20000 },
+        { "BARCODE_CONTENT_SEGS", BARCODE_CONTENT_SEGS, 0x20000 },
     };
     static int const data_size = ARRAY_SIZE(data);
     int set = 0;
@@ -1437,6 +1438,9 @@ int testUtilDataPath(char *buffer, int buffer_size, const char *subdir, const ch
     int i;
 #endif
 
+    assert(buffer); /* Suppress clang-tidy-21 clang-analyzer-core.NonNullParamChecker */
+
+    /* Apparently `getenv()` & `getcwd()` "taint" stuff (external attack vectors) hence later NOLINTs */
     if ((cmake_src_dir = getenv("CMAKE_CURRENT_SOURCE_DIR")) != NULL) {
         len = (int) strlen(cmake_src_dir);
         if (len <= 0 || len >= buffer_size) {
@@ -1500,7 +1504,7 @@ int testUtilDataPath(char *buffer, int buffer_size, const char *subdir, const ch
     }
 
     if (subdir_len) {
-        if (*subdir != '/' && buffer[len - 1] != '/') {
+        if (*subdir != '/' && buffer[len - 1] != '/') { /* NOLINT(clang-analyzer-security.ArrayBound) - see above */
             if (len + 1 >= buffer_size) {
                 fprintf(stderr, "testUtilDataPath: subdir len (%d) + 1 >= buffer_size (%d)\n", len, buffer_size);
                 return 0;
@@ -1518,7 +1522,7 @@ int testUtilDataPath(char *buffer, int buffer_size, const char *subdir, const ch
     }
 
     if (filename_len) {
-        if (*filename != '/' && buffer[len - 1] != '/') {
+        if (*filename != '/' && buffer[len - 1] != '/') { /* NOLINT(clang-analyzer-security.ArrayBound) - see above */
             if (len + 1 >= buffer_size) {
                 fprintf(stderr, "testUtilDataPath: filename len (%d) + 1 >= buffer_size (%d)\n", len, buffer_size);
                 return 0;
@@ -2575,7 +2579,7 @@ int testUtilCanBwipp(int index, const struct zint_symbol *symbol, int option_1, 
 
 /* Convert Zint GS1 and add-on format to BWIPP's */
 static char *testUtilBwippCvtGS1Data(char *bwipp_data, const int bwipp_data_size, const int upcean,
-                const int parens_mode, const int parens_esc_mode, int *addon_posn, int *parens_esc) {
+                const int parens_mode, int *addon_posn, int *parens_esc) {
     char *b = bwipp_data, *c;
     char *be = b + bwipp_data_size;
     int pipe = 0;
@@ -2587,7 +2591,7 @@ static char *testUtilBwippCvtGS1Data(char *bwipp_data, const int bwipp_data_size
     *parens_esc = 0;
     for (c = cpy; b < be && *c; b++, c++) {
         if ((!parens_mode && (*c == '(' || *c == ')'))
-                || (parens_esc_mode && *c == '\\' && (c[1] == '(' || c[1] == ')'))) {
+                || (parens_mode && *c == '\\' && (c[1] == '(' || c[1] == ')'))) {
             if (b + 4 >= be) {
                 fprintf(stderr, "testUtilBwippCvtGS1Data: parenthesis bwipp_data buffer full (%d)\n",
                         bwipp_data_size);
@@ -2899,7 +2903,6 @@ int testUtilBwipp(int index, const struct zint_symbol *symbol, int option_1, int
     const int parens_mode = symbol->input_mode & GS1PARENS_MODE;
     const char obracket = parens_mode ? '(' : '[';
     const char cbracket = parens_mode ? ')' : ']';
-    const int parens_esc_mode = parens_mode && (symbol->input_mode & ESCAPE_MODE);
     int addon_posn;
     int parens_esc;
     int eci;
@@ -2947,8 +2950,8 @@ int testUtilBwipp(int index, const struct zint_symbol *symbol, int option_1, int
         strcat(bwipp_data, primary);
         strcat(bwipp_data, "|");
         strcat(bwipp_data, data);
-        if (testUtilBwippCvtGS1Data(bwipp_data, bwipp_data_size, upcean, parens_mode, parens_esc_mode, &addon_posn,
-                                    &parens_esc) == NULL) {
+        if (testUtilBwippCvtGS1Data(bwipp_data, bwipp_data_size, upcean, parens_mode, &addon_posn, &parens_esc)
+                == NULL) {
             return -1;
         }
 
@@ -2993,8 +2996,8 @@ int testUtilBwipp(int index, const struct zint_symbol *symbol, int option_1, int
                                                                 : parens_mode ? "(01)" : "[01]");
             }
             strcat(bwipp_data, data);
-            if (testUtilBwippCvtGS1Data(bwipp_data, bwipp_data_size, upcean, parens_mode, parens_esc_mode,
-                                        &addon_posn, &parens_esc) == NULL) {
+            if (testUtilBwippCvtGS1Data(bwipp_data, bwipp_data_size, upcean, parens_mode, &addon_posn, &parens_esc)
+                    == NULL) {
                 return -1;
             }
 

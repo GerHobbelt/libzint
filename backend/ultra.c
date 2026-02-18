@@ -32,6 +32,7 @@
 
 /* This version was developed using AIMD/TSC15032-43 v0.99c Edit 60, dated 4th Nov 2015 */
 
+#include <assert.h>
 #include <stdio.h>
 #include "common.h"
 
@@ -637,6 +638,8 @@ static int ult_generate_codewords(struct zint_symbol *symbol, const unsigned cha
     char *mode = (char *) z_alloca(length + 1);
     int *cw_fragment = (int *) z_alloca(sizeof(int) * (length * 2 + 1));
 
+    assert(length > 0); /* Suppress clang-tidy-21 clang-analyzer-security.ArrayBound */
+
     /* Check for 06 Macro Sequence and crop accordingly */
     if (length >= 9
             && source[0] == '[' && source[1] == ')' && source[2] == '>' && source[3] == '\x1e'
@@ -694,6 +697,7 @@ static int ult_generate_codewords(struct zint_symbol *symbol, const unsigned cha
                 }
                 input_locn += ascii_encoded;
             } else if (mode[input_locn] == 'c') {
+                assert(c43_encoded >= 0); /* Suppress clang-tidy-21 clang-analyzer-security.ArrayBound */
                 for (i = 0; i < c43_encoded; i++) {
                     mode[input_locn + i] = 'c';
                 }
@@ -804,7 +808,7 @@ static int ult_generate_codewords_segs(struct zint_symbol *symbol, struct zint_s
     const int gs1 = (symbol->input_mode & 0x07) == GS1_MODE;
     /* Raw text dealt with by `ZBarcode_Encode_Segs()`, except for `eci` feedback.
        Note not updating `eci` for GS1 mode as not converted */
-    const int raw_text = !gs1 && (symbol->output_options & BARCODE_RAW_TEXT);
+    const int content_segs = !gs1 && (symbol->output_options & BARCODE_CONTENT_SEGS);
 
     for (i = 0; i < seg_count; i++) {
         if (segs[i].eci) {
@@ -906,15 +910,15 @@ static int ult_generate_codewords_segs(struct zint_symbol *symbol, struct zint_s
     current_mode = symbol_mode;
     codeword_count = ult_generate_codewords(symbol, source, length, 0 /*eci*/, gs1, symbol_mode, &current_mode,
                                             codewords, codeword_count);
-    if (raw_text && segs[0].eci) {
-        z_rt_set_seg_eci(symbol, 0, segs[0].eci);
+    if (content_segs && segs[0].eci) {
+        z_ct_set_seg_eci(symbol, 0, segs[0].eci);
     }
 
     for (i = 1; i < seg_count; i++) {
         codeword_count = ult_generate_codewords(symbol, segs[i].source, segs[i].length, segs[i].eci, gs1, symbol_mode,
                                                 &current_mode, codewords, codeword_count);
-        if (raw_text && segs[i].eci) {
-            z_rt_set_seg_eci(symbol, i, segs[i].eci);
+        if (content_segs && segs[i].eci) {
+            z_ct_set_seg_eci(symbol, i, segs[i].eci);
         }
     }
 

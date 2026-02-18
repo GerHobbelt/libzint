@@ -204,7 +204,7 @@ static int c1_look_ahead_test(const unsigned char source[], const int length, co
 
     for (sp = position; sp < length; sp++) {
         const unsigned char c = source[sp];
-        const int is_extended = c & 0x80;
+        const int is_extended = !z_isascii(c);
 
         /* Step L */
         if (z_isdigit(c)) {
@@ -456,7 +456,7 @@ static int c1_c40text_cnt(const int current_mode, const int gs1, unsigned char i
         return 2;
     }
     cnt = 1;
-    if (input & 0x80) {
+    if (!z_isascii(input)) {
         cnt += 2;
         input -= 128;
     }
@@ -646,7 +646,7 @@ static int c1_encode(struct zint_symbol *symbol, unsigned char source[], int len
                         if (next_mode == C1_ASCII) {
                             if (debug_print) printf("ASC(%d) ", source[sp]);
 
-                            if (source[sp] & 0x80) {
+                            if (!z_isascii(source[sp])) {
                                 /* Step B7 */
                                 target[tp++] = 235; /* FNC4 (Upper Shift) */
                                 target[tp++] = (source[sp] - 128) + 1;
@@ -700,9 +700,10 @@ static int c1_encode(struct zint_symbol *symbol, unsigned char source[], int len
                 }
                 if (debug_print) fputs(current_mode == C1_C40 ? "C40 " : "TEXT ", stdout);
 
-                if (source[sp] & 0x80) {
+                if (!z_isascii(source[sp])) {
                     cte_buffer[cte_p++] = 1; /* Shift 2 */
                     cte_buffer[cte_p++] = 30; /* FNC4 (Upper Shift) */
+                    assert(source[sp] >= 128); /* Suppress clang-tidy-21 clang-analyzer-security.ArrayBound */
                     if (ct_shift[source[sp] - 128]) {
                         cte_buffer[cte_p++] = ct_shift[source[sp] - 128] - 1;
                     }
@@ -900,7 +901,7 @@ static int c1_encode(struct zint_symbol *symbol, unsigned char source[], int len
                     if (z_is_twodigits(source, length, sp)) {
                         target[tp++] = z_to_int(source + sp, 2) + 130;
                         sp++;
-                    } else if (source[sp] & 0x80) {
+                    } else if (!z_isascii(source[sp])) {
                         target[tp++] = 235; /* FNC4 (Upper Shift) */
                         target[tp++] = (source[sp] - 128) + 1;
                     } else if (gs1 && source[sp] == '\x1D') {
@@ -983,12 +984,12 @@ static int c1_encode_segs(struct zint_symbol *symbol, struct zint_seg segs[], co
     int tp = 0;
     /* Raw text dealt with by `ZBarcode_Encode_Segs()`, except for `eci` feedback.
        Note not updating `eci` for GS1 mode as not converted (and ignored & not written anyway) */
-    const int raw_text = !gs1 && (symbol->output_options & BARCODE_RAW_TEXT);
+    const int content_segs = !gs1 && (symbol->output_options & BARCODE_CONTENT_SEGS);
 
     for (i = 0; i < seg_count; i++) {
         tp = c1_encode(symbol, segs[i].source, segs[i].length, segs[i].eci, seg_count, gs1, target, &tp, p_last_mode);
-        if (raw_text && segs[i].eci) {
-            z_rt_set_seg_eci(symbol, i, segs[i].eci);
+        if (content_segs && segs[i].eci) {
+            z_ct_set_seg_eci(symbol, i, segs[i].eci);
         }
     }
 

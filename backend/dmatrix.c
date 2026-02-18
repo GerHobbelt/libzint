@@ -549,6 +549,7 @@ static int dm_edi_buffer_xfer(int process_buffer[8], int process_p, unsigned cha
         memmove(process_buffer, process_buffer + process_e, sizeof(int) * process_p);
         if (empty) {
             if (process_p == 3) {
+                assert(i < 6); /* Suppress clang-tidy-21 clang-analyzer-security.ArrayBound */
                 target[tp++] = (unsigned char) (process_buffer[i] << 2 | (process_buffer[i + 1] & 0x30) >> 4);
                 target[tp++] = (unsigned char) ((process_buffer[i + 1] & 0x0F) << 4
                                                 | (process_buffer[i + 2] & 0x3C) >> 2);
@@ -558,6 +559,7 @@ static int dm_edi_buffer_xfer(int process_buffer[8], int process_p, unsigned cha
                             target[tp - 3], target[tp - 2], target[tp - 1]);
                 }
             } else if (process_p == 2) {
+                assert(i < 7); /* Suppress clang-tidy-21 clang-analyzer-security.ArrayBound */
                 target[tp++] = (unsigned char) (process_buffer[i] << 2 | (process_buffer[i + 1] & 0x30) >> 4);
                 target[tp++] = (unsigned char) ((process_buffer[i + 1] & 0x0F) << 4);
                 if (debug_print) {
@@ -565,6 +567,7 @@ static int dm_edi_buffer_xfer(int process_buffer[8], int process_p, unsigned cha
                             target[tp - 1]);
                 }
             } else {
+                assert(i < 8); /* Suppress clang-tidy-21 clang-analyzer-security.ArrayBound */
                 target[tp++] = (unsigned char) (process_buffer[i] << 2);
                 if (debug_print) printf("[%d (%d)] ", process_buffer[i], target[tp - 1]);
             }
@@ -931,6 +934,8 @@ static void dm_addEdge(struct zint_symbol *symbol, const unsigned char *source, 
 static void dm_addEdges(struct zint_symbol *symbol, const unsigned char source[], const int length,
             const int last_seg, struct dm_edge *edges, const int from, struct dm_edge *previous, const int gs1) {
     int i, pos;
+
+    assert(from < length); /* Suppress clang-tidy-21 clang-analyzer-security.ArrayBound */
 
     /* Not possible to unlatch a full EDF edge to something else */
     if (previous == NULL || previous->endMode != DM_EDIFACT) {
@@ -1690,7 +1695,7 @@ static int dm_encode_segs(struct zint_symbol *symbol, struct zint_seg segs[], co
     const int gs1 = (symbol->input_mode & 0x07) == GS1_MODE ? 1 + !!(symbol->output_options & GS1_GS_SEPARATOR) : 0;
     /* Raw text dealt with by `ZBarcode_Encode_Segs()`, except for `eci` feedback.
        Note not updating `eci` for GS1 mode as not converted */
-    const int raw_text = !gs1 && (symbol->output_options & BARCODE_RAW_TEXT);
+    const int content_segs = !gs1 && (symbol->output_options & BARCODE_CONTENT_SEGS);
     const int debug_print = symbol->debug & ZINT_DEBUG_PRINT;
 
     if ((i = z_segs_length(segs, seg_count)) > 3116) { /* Max is 3166 digits */
@@ -1808,8 +1813,8 @@ static int dm_encode_segs(struct zint_symbol *symbol, struct zint_seg segs[], co
             assert(error_number >= ZINT_ERROR);
             return error_number;
         }
-        if (raw_text && segs[i].eci) {
-            z_rt_set_seg_eci(symbol, i, segs[i].eci);
+        if (content_segs && segs[i].eci) {
+            z_ct_set_seg_eci(symbol, i, segs[i].eci);
         }
     }
 
@@ -1880,6 +1885,8 @@ static int dm_ecc200(struct zint_symbol *symbol, struct zint_seg segs[], const i
     datablock = dm_matrixdatablock[symbolsize];
     rsblock = dm_matrixrsblock[symbolsize];
 
+    assert(H > 1 && W > 1); /* Suppress clang-tidy-21 clang-analyzer-security.ArrayBound */
+
     taillength = bytes - binlen;
 
     if (taillength != 0) {
@@ -1898,6 +1905,7 @@ static int dm_ecc200(struct zint_symbol *symbol, struct zint_seg segs[], const i
     dm_ecc(binary, bytes, datablock, rsblock, skew);
     if (debug_print) {
         printf("ECC (%d): ", rsblock * (bytes / datablock));
+        assert(bytes > 0); /* Suppress clang-tidy-21 clang-analyzer-security.ArrayBound */
         for (i = bytes; i < bytes + rsblock * (bytes / datablock); i++) printf("%d ", binary[i]);
         fputc('\n', stdout);
     }
