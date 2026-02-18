@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2021-2025 by Robin Stuart <rstuart114@gmail.com>        *
+ *   Copyright (C) 2021-2026 by Robin Stuart <rstuart114@gmail.com>        *
  *                                                                         *
  *   This program is free software: you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -552,7 +552,9 @@ private slots:
         QTest::newRow("BARCODE_DATAMATRIX unknown format") << BARCODE_DATAMATRIX << "1234" << "test_save_to_file.ext" << false;
         QTest::newRow("BARCODE_DATAMATRIX UTF8 gif") << BARCODE_DATAMATRIX << "1234" << "test_save_to_file_τ.gif" << true;
         QTest::newRow("BARCODE_DATAMATRIX too long (unknown format)") << BARCODE_DATAMATRIX << "1234"
-            << "test_6789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012.gif" // 256 long so should be truncated to end in ".gi"
+            <<  "test_67890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+                "1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890"
+                "1234567890123456789012345678901234567890123456789012.gif" // 256 long so should be truncated to end in ".gi"
             << false;
     }
 
@@ -576,6 +578,64 @@ private slots:
         if (bRet) {
             bRet = QFile::remove(fileName);
             QCOMPARE(bRet, true);
+        }
+    }
+
+    void saveToMemfileTest_data()
+    {
+        QTest::addColumn<int>("symbology");
+        QTest::addColumn<QString>("text");
+        QTest::addColumn<QString>("fileName");
+        QTest::addColumn<bool>("expected_bRet");
+        QTest::addColumn<QString>("expected_strData");
+
+        QTest::newRow("BARCODE_DATAMATRIX gif") << BARCODE_DATAMATRIX << "1234" << "test_memfile.gif" << true
+            <<  "47494638376114001400f00000ffffff0000002c00000000140014000002"
+                "3c4c00869ad7eb988c942168b2cef7eecf794e37594f776a285a862b8485"
+                "ea49caf66a4ef10ca7204e010a69a24f6ff7231a5f351db3580149a7d44c"
+                "01003b";
+        QTest::newRow("BARCODE_DATAMATRIX svg") << BARCODE_DATAMATRIX << "1234" << "test_memfile.svg" << true
+            <<  "<?xml version=\"1.0\" standalone=\"no\"?>\n"
+                "<!DOCTYPE svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">\n"
+                "<svg width=\"20\" height=\"20\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\">\n"
+                " <desc>Zint Generated Symbol</desc>\n"
+                " <g id=\"barcode\" fill=\"#000000\">\n"
+                "  <rect x=\"0\" y=\"0\" width=\"20\" height=\"20\" fill=\"#FFFFFF\"/>\n"
+                "  <path d=\"M0 0h2v2h-2ZM4 0h2v2h-2ZM8 0h2v2h-2ZM12 0h2v2h-2ZM16 0h2v2h-2ZM0 2h4v8h-4ZM10"
+                    " 2h10v2h-10ZM8 4h2v2h-2ZM16 4h2v2h-2ZM14 6h2v2h-2ZM18 6h2v2h-2ZM6 8h4v2h-4ZM12 8h2v2h-2ZM0"
+                    " 10h2v4h-2ZM6 10h2v2h-2ZM10 10h2v2h-2ZM14 10h6v2h-6ZM8 12h2v2h-2ZM12 12h2v2h-2ZM0 14h8v2h-8ZM10"
+                    " 14h2v2h-2ZM16 14h4v2h-4ZM0 16h2v2h-2ZM14 16h4v2h-4ZM0 18h20v2h-20Z\"/>\n"
+                " </g>\n"
+                "</svg>\n";
+    }
+
+    void saveToMemfileTest()
+    {
+        Zint::QZint bc;
+
+        bool bRet;
+
+        QFETCH(int, symbology);
+        QFETCH(QString, text);
+        QFETCH(QString, fileName);
+        QFETCH(bool, expected_bRet);
+        QFETCH(QString, expected_strData);
+
+        bc.setSymbol(symbology);
+        bc.setText(text);
+
+        QByteArray data;
+        bRet = bc.save_to_memfile(fileName, data);
+        QCOMPARE(bRet, expected_bRet);
+
+        if (bRet) {
+            QCOMPARE(bRet, true);
+            if (fileName.endsWith(".eps") || fileName.endsWith(".svg") || fileName.endsWith(".txt")) {
+                QCOMPARE(data, expected_strData);
+            } else {
+                QByteArray expected_data = QByteArray::fromHex(expected_strData.toUtf8());
+                QCOMPARE(data, expected_data);
+            }
         }
     }
 
@@ -669,17 +729,17 @@ private slots:
         QTest::newRow("BARCODE_AZTEC") << false << 0.0f << ""
             << BARCODE_AZTEC << UNICODE_MODE // symbology-inputMode
             << "12345678Ж0%var%" << "" // text-primary
-            << 0.0f << 1 << 0 << 0 << 4.0f << 0.0f << true << 0.9f << 1.0f // height-textGap
+            << 0.0f << 1 << 0 << ZINT_AZTEC_FULL << 4.0f << 0.0f << true << 0.9f << 1.0f // height-textGap
             << 5.0f << 2 << 1 << "as\"dfa'sdf" // guardDescent-structAppID
             << "" << "" << QColor(Qt::blue) << QColor(Qt::white) << true // fgStr-cmyk
             << 0 << 0 << 2 << 3 << 0 // borderTypeIndex-fontSetting
             << true << false << false << false << false << 0 // showText-rotateAngle
             << 7 << false << false << false << false << false << false << WARN_DEFAULT << false // eci-debug
             << 0.0 << 0 << 0 << 0 << 0 << 0 // xdimdp
-            << "zint -b 92 --cmyk --eci=7 -d '12345678Ж0%var%' --dotsize=0.9 --dotty --fg=0000FF --scale=4"
-                " --secure=1 --structapp='1,2,as\"dfa'\\''sdf' --vwhitesp=3 -w 2"
-            << "zint.exe -b 92 --cmyk --eci=7 -d \"12345678Ж0%var%\" --dotsize=0.9 --dotty --fg=0000FF --scale=4"
-                " --secure=1 --structapp=\"1,2,as\\\"dfa'sdf\" --vwhitesp=3 -w 2"
+            << "zint -b 92 --azfull --cmyk --eci=7 -d '12345678Ж0%var%' --dotsize=0.9 --dotty --fg=0000FF"
+                " --scale=4 --secure=1 --structapp='1,2,as\"dfa'\\''sdf' --vwhitesp=3 -w 2"
+            << "zint.exe -b 92 --azfull --cmyk --eci=7 -d \"12345678Ж0%var%\" --dotsize=0.9 --dotty --fg=0000FF"
+                " --scale=4 --secure=1 --structapp=\"1,2,as\\\"dfa'sdf\" --vwhitesp=3 -w 2"
             << "" << "" << "" << "";
 
         QTest::newRow("BARCODE_AZTEC (bgStr CMYK, fgStr CMYK)") << false << 0.0f << ""

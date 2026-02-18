@@ -1,5 +1,5 @@
 # Copyright (C) 2008 by BogDan Vatra < bogdan@licentia.eu >
-# Copyright (C) 2009-2024 Robin Stuart <rstuart114@gmail.com>
+# Copyright (C) 2009-2026 Robin Stuart <rstuart114@gmail.com>
 # vim: set ts=4 sw=4 et :
 
 cmake_minimum_required(VERSION 3.10)
@@ -23,6 +23,9 @@ endif()
 if(NOT HAVE_GETOPT_LONG_ONLY)
     target_link_libraries(${PROJECT_NAME} zint_bundled_getopt)
 endif()
+
+get_property(libdir GLOBAL PROPERTY ZINT_LIBDIR)
+set_target_properties(${PROJECT_NAME} PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH};${libdir}")
 
 install(TARGETS ${PROJECT_NAME} DESTINATION "${CMAKE_INSTALL_BINDIR}" RUNTIME)
 if(UNIX)

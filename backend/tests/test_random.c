@@ -1,7 +1,7 @@
 /* Test zint against ZXing-C++ */
 /*
     libzint - the open source barcode library
-    Copyright (C) 2025 Robin Stuart <rstuart114@gmail.com>
+    Copyright (C) 2025-2026 Robin Stuart <rstuart114@gmail.com>
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions
@@ -138,7 +138,7 @@ static void test_random(const testCtx *const p_ctx, const struct random_item *rd
                                 (const char *) data_buf, length, debug);
 
         ret = ZBarcode_Encode(symbol, data_buf, length);
-        assert_zero(ret, "i:%d ZBarcode_Encode ret %d != 0 (%s)\n", i, ret, symbol->errtxt);
+        assert_zero(ret, "i:%d ZBarcode_Encode ret %d != 0 (length %d) (%s)\n", i, ret, length, symbol->errtxt);
 
         assert_nonzero(testUtilCanZXingCPP(i, symbol, (const char *) data_buf, length, debug), "i:%d testUtilCanZXingCPP != 0\n", i);
 
@@ -168,7 +168,15 @@ static void test_random(const testCtx *const p_ctx, const struct random_item *rd
 
 static void test_aztec(const testCtx *const p_ctx) {
     struct random_item rdata = {
-        FLAG_FULL_8BIT, BARCODE_AZTEC, DATA_MODE, 899, 1, 0, 0, -1, 1600
+        FLAG_FULL_8BIT, BARCODE_AZTEC, DATA_MODE, 899, 1, 0, 0, -1, 1900
+    };
+
+    test_random(p_ctx, &rdata);
+}
+
+static void test_aztec_fast(const testCtx *const p_ctx) {
+    struct random_item rdata = {
+        FLAG_FULL_8BIT, BARCODE_AZTEC, DATA_MODE | FAST_MODE, 899, 1, 0, 0, -1, 1590
     };
 
     test_random(p_ctx, &rdata);
@@ -298,6 +306,7 @@ int main(int argc, char *argv[]) {
 
     testFunction funcs[] = { /* name, func */
         { "test_aztec", test_aztec },
+        { "test_aztec_fast", test_aztec_fast },
         { "test_codablockf", test_codablockf },
         { "test_codablockf_ascii", test_codablockf_ascii },
         { "test_code128", test_code128 },

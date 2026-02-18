@@ -1,5 +1,5 @@
 # Copyright (C) 2008 by BogDan Vatra < bogdan@licentia.eu >
-# Copyright (C) 2009-2025 Robin Stuart <rstuart114@gmail.com>
+# Copyright (C) 2009-2026 Robin Stuart <rstuart114@gmail.com>
 # vim: set ts=4 sw=4 et :
 
 cmake_minimum_required(VERSION 3.10)
@@ -147,6 +147,9 @@ if(NOT HAVE_GETOPT_LONG_ONLY)
     add_subdirectory(getopt)
 endif()
 
+# For setting rpath in frontend and frontend_qt
+set_property(GLOBAL PROPERTY ZINT_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+
 add_subdirectory(backend)
 if(ZINT_FRONTEND)
     add_subdirectory(frontend)
@@ -154,7 +157,7 @@ endif()
 
 if(NOT ZINT_USE_QT)
     message(STATUS "Qt support was disabled for this build")
-elseif(ZINT_QT6 OR ($ENV{CMAKE_PREFIX_PATH} MATCHES "6[.][0-9][.][0-9]"))
+elseif(ZINT_QT6)
     set(USE_QT6 TRUE)
     message(STATUS "Using Qt6")
     cmake_policy(SET CMP0012 NEW) # Recognize constants in if()
