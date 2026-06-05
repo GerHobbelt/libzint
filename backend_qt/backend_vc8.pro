@@ -1,10 +1,10 @@
 win32 {
-	TEMPLATE = vclib
-	CONFIG += staticlib debug-and-release
+    TEMPLATE = vclib
+    CONFIG += staticlib debug-and-release
 }
 
 TARGET = QtZint2
-VERSION = 2.13.0.9
+VERSION = 2.16.0
 
 QMAKE_CFLAGS += /TP /wd4018 /wd4244 /wd4305
 QMAKE_CXXFLAGS += /TP /wd4018 /wd4244 /wd4305
@@ -54,14 +54,20 @@ HEADERS +=  ../backend/aztec.h \
             qzint.h
 
 SOURCES += ../backend/2of5.c \
+           ../backend/2of5inter.c \
+           ../backend/2of5inter_based.c \
            ../backend/auspost.c \
            ../backend/aztec.c \
            ../backend/bc412.c \
            ../backend/bmp.c \
+           ../backend/channel.c \
+           ../backend/codabar.c \
            ../backend/codablock.c \
            ../backend/code.c \
            ../backend/code1.c \
+           ../backend/code11.c \
            ../backend/code128.c \
+           ../backend/code128_based.c \
            ../backend/code16k.c \
            ../backend/code49.c \
            ../backend/common.c \

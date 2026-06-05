@@ -1,5 +1,5 @@
 # Copyright (C) 2008 by BogDan Vatra < bogdan@licentia.eu >
-# Copyright (C) 2009-2024 Robin Stuart <rstuart114@gmail.com>
+# Copyright (C) 2009-2025 Robin Stuart <rstuart114@gmail.com>
 # vim: set ts=4 sw=4 et :
 
 cmake_minimum_required(VERSION 3.10)
@@ -8,25 +8,27 @@ project(zint-package)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(ZINT_VERSION_MAJOR 2)
-set(ZINT_VERSION_MINOR 13)
+set(ZINT_VERSION_MINOR 16)
 set(ZINT_VERSION_RELEASE 0)
-set(ZINT_VERSION_BUILD 9) # Set to 0 before release, set to 9 after release
+set(ZINT_VERSION_BUILD 0) # Set to 0 before release, set to 9 after release
 set(ZINT_VERSION "${ZINT_VERSION_MAJOR}.${ZINT_VERSION_MINOR}.${ZINT_VERSION_RELEASE}.${ZINT_VERSION_BUILD}")
 
 add_definitions(-DZINT_VERSION=\"${ZINT_VERSION}\")
 
 option(ZINT_DEBUG     "Set debug compile flags"         OFF)
 option(ZINT_NOOPT     "Set no optimize compile flags"   OFF)
-option(ZINT_SANITIZE  "Set sanitize compile/link flags" OFF)
+option(ZINT_SANITIZE  "Set sanitize address/undefined"  OFF)
+option(ZINT_SANITIZEM "Set sanitize memory (ignored if ZINT_SANITIZE)" OFF)
 option(ZINT_TEST      "Set test compile flag"           OFF)
 option(ZINT_COVERAGE  "Set code coverage flags"         OFF)
 option(ZINT_SHARED    "Build shared library"            ON)
 option(ZINT_STATIC    "Build static library"            OFF)
+option(ZINT_FRONTEND  "Build frontend"                  ON)
+option(ZINT_USE_GS1SE "Build with GS1 Syntax Engine"    ON)
 option(ZINT_USE_PNG   "Build with PNG support"          ON)
 option(ZINT_USE_QT    "Build with Qt support"           ON)
 option(ZINT_QT6       "If ZINT_USE_QT, use Qt6"         OFF)
 option(ZINT_UNINSTALL "Add uninstall target"            ON)
-option(ZINT_FRONTEND  "Build frontend"                  ON)
 
 if(NOT ZINT_SHARED AND NOT ZINT_STATIC)
     message(SEND_ERROR "Either ZINT_SHARED or ZINT_STATIC or both must be set")
@@ -53,17 +55,30 @@ if(NOT MSVC) # Use default warnings if MSVC otherwise inundated
         add_compile_options("-Wextra")
     endif()
 
-    # gcc complains about "%n$" `errtxtf()` arguments if "-Wpedantic" used, so only use for clang
-    if(CMAKE_C_COMPILER_ID MATCHES "Clang")
-        check_c_compiler_flag("-Wpedantic" C_COMPILER_FLAG_WPEDANTIC)
-        if(C_COMPILER_FLAG_WPEDANTIC)
-            add_compile_options("-Wpedantic")
-        endif()
+    check_c_compiler_flag("-Wpedantic" C_COMPILER_FLAG_WPEDANTIC)
+    if(C_COMPILER_FLAG_WPEDANTIC)
+        add_compile_options("-Wpedantic")
     endif()
 
+    check_c_compiler_flag("-Wcast-align" C_COMPILER_FLAG_WCASTALIGN)
+    if(C_COMPILER_FLAG_WCASTALIGN)
+        add_compile_options("-Wcast-align")
+    endif()
+    check_c_compiler_flag("-Wpointer-arith" C_COMPILER_FLAG_WPOINTERARITH)
+    if(C_COMPILER_FLAG_WPOINTERARITH)
+        add_compile_options("-Wpointer-arith")
+    endif()
+    check_c_compiler_flag("-Wshadow" C_COMPILER_FLAG_WSHADOW)
+    if(C_COMPILER_FLAG_WSHADOW)
+        add_compile_options("-Wshadow")
+    endif()
     check_c_compiler_flag("-Wundef" C_COMPILER_FLAG_WUNDEF)
     if(C_COMPILER_FLAG_WUNDEF)
         add_compile_options("-Wundef")
+    endif()
+    check_c_compiler_flag("-Wwrite-strings" C_COMPILER_FLAG_WWRITESTRINGS)
+    if(C_COMPILER_FLAG_WWRITESTRINGS)
+        add_compile_options("-Wwrite-strings")
     endif()
 endif()
 
@@ -90,7 +105,7 @@ if(ZINT_SANITIZE)
             message(STATUS "ZINT_SANITIZE: ignoring for MSVC < 2019")
         endif()
     else()
-        set(SANITIZERS address undefined)
+        set(SANITIZERS address undefined leak)
         foreach(sanitizer IN ITEMS ${SANITIZERS})
             set(CMAKE_REQUIRED_LIBRARIES -fsanitize=${sanitizer})
             check_c_compiler_flag(-fsanitize=${sanitizer} C_COMPILER_FLAG_FSANITIZE_${sanitizer})
@@ -101,10 +116,6 @@ if(ZINT_SANITIZE)
             unset(CMAKE_REQUIRED_LIBRARIES)
         endforeach()
 
-        if(NOT ZINT_DEBUG AND CMAKE_C_COMPILER_ID MATCHES "GNU")
-            # Gives warning on MainWindow::setupUI() and retries (& takes forever) if var-tracking-assignments enabled
-            add_compile_options(-fno-var-tracking-assignments)
-        endif()
         if(CMAKE_C_COMPILER_ID MATCHES "Clang")
             # Recent clangs added deprecation warnings for `sprintf()` that are only triggered on sanitize - suppress
             add_compile_options(-Wno-deprecated-declarations)
@@ -185,10 +196,10 @@ if(ZINT_UNINSTALL)
       "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
       "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
       IMMEDIATE @ONLY)
-    
+
     add_custom_target(uninstall
       "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 endif()
 
 configure_file("zint-config.cmake.in" "zint-config.cmake" @ONLY)
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/zint-config.cmake" DESTINATION "${CMAKE_INSTALL_DATADIR}/zint")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/zint-config.cmake" DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/zint")

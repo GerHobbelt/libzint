@@ -1,7 +1,7 @@
 /*  fuzz.h - common functions for fuzzing libzint */
 /*
     libzint - the open source barcode library
-    Copyright (C) 2024 Robin Stuart <rstuart114@gmail.com>
+    Copyright (C) 2024-2025 Robin Stuart <rstuart114@gmail.com>
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions
@@ -51,7 +51,7 @@
                                 | COMPLIANT_HEIGHT | EANUPC_GUARD_WHITESPACE | EMBED_VECTOR_FONT)
 #endif
 
-/* Based on `is_sane()` flags in "backend/common.h") */
+/* Based on `z_not_sane()` flags in "backend/common.h") */
 #define IS_CTL_F    (0x00000001)            /* ASCII control (incl. DEL) */
 #define IS_PRT_F    (0x00000002)            /* ASCII printable (incl. space) */
 #define IS_SPC_F    (0x00000004 | IS_PRT_F) /* Space */
@@ -84,7 +84,7 @@
 #define IS_UPR_F    (IS_UPO_F | IS_UHX_F | IS_UT__F | IS_UX__F) /* Uppercase letters */
 #define IS_LWR_F    (IS_LWO_F | IS_LHX_F | IS_LT__F | IS_LX__F) /* Lowercase letters */
 
-/* Flag table for `is_chr()` and `is_sane()` (taken from "backend/common.c") */
+/* Flag table for `z_is_chr()` and `z_not_sane()` (adapted from "backend/common.c") */
 #define IS_CLS_F    (IS_CLI_F | IS_SIL_F)
 static const unsigned int flgs[256] = {
     IS_CTL_F, IS_CTL_F, IS_CTL_F, IS_CTL_F, IS_CTL_F, IS_CTL_F, IS_CTL_F, IS_CTL_F, /*00-07*/
@@ -121,16 +121,16 @@ static const unsigned int flgs[256] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /*E0-FF*/
 };
 
-/* Verifies that a string only uses valid characters */
-static int is_sane(const unsigned int flg, const unsigned char source[], const int length) {
+/* Verifies if a string only uses valid characters, returning 1-based position in `source` if not, 0 for success */
+static int not_sane(const unsigned int flg, const unsigned char source[], const int length) {
     int i;
 
     for (i = 0; i < length; i++) {
         if (!(flgs[source[i]] & flg)) {
-            return 0;
+            return i + 1;
         }
     }
-    return 1;
+    return 0;
 }
 
 #define NEON_F              (IS_NUM_F) /* NEON "0123456789" */
@@ -311,6 +311,8 @@ static const struct settings_item settings[] = {
     { 143, BARCODE_UPNQR,                   0,           0,  -1,           0,  -1, ZINT_FULL_MULTIBYTE,     1,  411 },
     { 144, BARCODE_ULTRA,                   0,          -1,   5,           0,   2, ULTRA_COMPRESSION,       1,  504 },
     { 145, BARCODE_RMQR,                    0,          -1,   4,           0,  38,           0,             1,  361 },
+    { 146, BARCODE_BC412,           ARSENIC_F,           0,  -1,           0,  -1,           0,             7,   18 },
+    { 147, BARCODE_DXFILMEDGE,       SILVER_F,           0,  -1,           0,  -1,           0,             1,   10 },
 };
 
 /* Make sure value `v` is between `min` and `max` */
@@ -343,7 +345,7 @@ static int set_symbol(struct zint_symbol *symbol, const int idx, const int chk_s
         length--;
     }
     /* `option_1` */
-    if (length > si->len_min && si->option_1_min <= si->option_1_max) { 
+    if (length > si->len_min && si->option_1_min <= si->option_1_max) {
         unsigned char ch = *input++;
         if (ch != 0xFF) { /* Special case 255 as default (-1) */
             if (si->option_1_min + 1 == si->option_1_max) { /* Only one in it? */
@@ -355,7 +357,7 @@ static int set_symbol(struct zint_symbol *symbol, const int idx, const int chk_s
         length--;
     }
     /* `option_2` */
-    if (length > si->len_min && si->option_2_min <= si->option_2_max) { 
+    if (length > si->len_min && si->option_2_min <= si->option_2_max) {
         if (si->option_2_min + 1 == si->option_2_max) { /* Only one in it? */
             symbol->option_2 = (*input++ & 1) ? si->option_2_min : si->option_2_max; /* Odd/even */
         } else {
@@ -395,7 +397,7 @@ static int set_symbol(struct zint_symbol *symbol, const int idx, const int chk_s
     if (length > si->len_max) {
         return 0;
     }
-    if (chk_sane && si->sane_flag && !is_sane(si->sane_flag, input, length)) {
+    if (chk_sane && si->sane_flag && not_sane(si->sane_flag, input, length)) {
         return 0;
     }
 

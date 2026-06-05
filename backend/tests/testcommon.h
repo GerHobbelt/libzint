@@ -1,6 +1,6 @@
 /*
     libzint - the open source barcode library
-    Copyright (C) 2019-2024 Robin Stuart <rstuart114@gmail.com>
+    Copyright (C) 2019-2025 Robin Stuart <rstuart114@gmail.com>
 
     Redistribution and use in source and binary forms, with or without
     modification, are permitted provided that the following conditions
@@ -47,6 +47,7 @@ extern "C" {
 #define ZINT_DEBUG_TEST_BWIPP           128
 #define ZINT_DEBUG_TEST_PERFORMANCE     256
 #define ZINT_DEBUG_TEST_ZXINGCPP        512
+#define ZINT_DEBUG_TEST_BWIPP_ZXINGCPP  1024
 
 #include <errno.h>
 #include <stdio.h>
@@ -57,14 +58,15 @@ extern "C" {
 #define testutil_pclose(stream) _pclose(stream)
 #else
 #include <unistd.h>
+#  ifndef _WIN32
 extern FILE *popen(const char *command, const char *type);
 extern int pclose(FILE *stream);
+#  endif
 #define testutil_popen(command, mode) popen(command, mode)
 #define testutil_pclose(stream) pclose(stream)
 #endif
 
 #if defined(__GNUC__)
-#  pragma GCC diagnostic ignored "-Wpedantic"
 #  pragma GCC diagnostic ignored "-Woverlength-strings"
 #elif defined(_MSC_VER)
 #  pragma warning(disable: 4305) /* truncation from 'double' to 'float' */
@@ -80,8 +82,8 @@ extern const char *testAssertFilename;
 #define testStart(name) (testStartReal("", name, NULL))
 #define testStartSymbol(name, pp_symbol) (testStartReal("", name, pp_symbol))
 #else
-#define testStart(name) (testStartReal(__func__, name, NULL))
-#define testStartSymbol(name, pp_symbol) (testStartReal(__func__, name, pp_symbol))
+#define testStart(name) (ZEXT testStartReal(__func__, name, NULL))
+#define testStartSymbol(name, pp_symbol) (ZEXT testStartReal(__func__, name, pp_symbol))
 #endif
 void testStartReal(const char *func, const char *name, struct zint_symbol **pp_symbol);
 void testFinish(void);
@@ -90,10 +92,12 @@ void testReport(void);
 
 #define ZINT_TEST_CTX_EXC_MAX   32
 typedef struct s_testCtx {
+    const char *func_name;
     int index;
     int index_end;
     int exclude[ZINT_TEST_CTX_EXC_MAX];
     int exclude_end[ZINT_TEST_CTX_EXC_MAX];
+    int arg;
     int generate;
     int debug;
 } testCtx;
@@ -127,7 +131,10 @@ void assert_notequal(int e1, int e2, const char *fmt, ...);
 #define assert_notequal(e1, e2, ...) assert_exp((e1) != (e2), __VA_ARGS__)
 #endif
 
+/* TODO: replace these with `ZUCP()`, `ZCUCP()` & `ZCCP()` resp. */
 #define TU(p) ((unsigned char *) (p))
+#define TCU(p) ((const unsigned char *) (p))
+#define TCC(p) ((const char *) (p))
 
 INTERNAL void vector_free(struct zint_symbol *symbol); /* Free vector structures */
 
@@ -155,8 +162,8 @@ void testUtilModulesPrint(const struct zint_symbol *symbol, const char *prefix, 
 void testUtilModulesPrintRow(const struct zint_symbol *symbol, int row, const char *prefix, const char *postfix);
 int testUtilModulesCmp(const struct zint_symbol *symbol, const char *expected, int *width, int *row);
 int testUtilModulesCmpRow(const struct zint_symbol *symbol, int row, const char *expected, int *width);
-char *testUtilUIntArrayDump(unsigned int *array, int size, char *dump, int dump_size);
-char *testUtilUCharArrayDump(unsigned char *array, int size, char *dump, int dump_size);
+char *testUtilUIntArrayDump(const unsigned int *array, const int size, char *dump, const int dump_size);
+char *testUtilUCharArrayDump(const unsigned char *array, const int size, char *dump, const int dump_size);
 
 void testUtilBitmapPrint(const struct zint_symbol *symbol, const char *prefix, const char *postfix);
 int testUtilBitmapCmp(const struct zint_symbol *symbol, const char *expected, int *row, int *column);
@@ -206,12 +213,10 @@ int testUtilBwippCmpRow(const struct zint_symbol *symbol, int row, char *msg, co
 int testUtilHaveZXingCPPDecoder(void);
 int testUtilCanZXingCPP(int index, const struct zint_symbol *symbol, const char *data, const int length,
             const int debug);
-int testUtilZXingCPP(int index, struct zint_symbol *symbol, const char *source, const int length, char *bits,
-            char *buffer, const int buffer_size, int *p_cmp_len);
-int testUtilZXingCPPSegs(int index, struct zint_symbol *symbol, const struct zint_seg segs[], const int seg_count, char *bits,
-            char *buffer, const int buffer_size, int *p_cmp_len);
-int testUtilZXingCPPCmp(struct zint_symbol *symbol, char *msg, char *cmp_buf, int cmp_len,
-            const char *expected, int expected_len, const char *primary, char *ret_buf, int *p_ret_len);
+int testUtilZXingCPP(int index, struct zint_symbol *symbol, const char *source, const int length, const char *bits,
+            const int zxingcpp_cmp, char *buffer, const int buffer_size, int *p_cmp_len);
+int testUtilZXingCPPCmp(struct zint_symbol *symbol, char *msg, char *cmp_buf, int cmp_len, const char *expected,
+            int expected_len, const char *primary, char *ret_buf, int *p_ret_len);
 int testUtilZXingCPPCmpSegs(struct zint_symbol *symbol, char *msg, char *cmp_buf, int cmp_len,
             const struct zint_seg segs[], const int seg_count, const char *primary, char *ret_buf, int *p_ret_len);
 
