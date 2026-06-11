@@ -486,8 +486,7 @@ static int out_quiet_zones(const struct zint_symbol *symbol, const int hide_text
 
         case BARCODE_TELEPEN:
         case BARCODE_TELEPEN_NUM:
-            /* Appears to be ~10X from diagram in Telepen Barcode Symbology information and History */
-            /* TODO: Find better doc */
+            /* AIM Europe USS Telepen - 10X */
             *left = *right = 10.0f;
             done = 1;
             break;
@@ -957,7 +956,7 @@ static int out_maybe_mkdir(const char *path) {
 }
 
 /* Create output file, creating sub-directories if necessary. Returns `fopen()` FILE pointer */
-INTERNAL FILE *zint_out_fopen(const char filename[256], const char *mode) {
+INTERNAL FILE *zint_out_fopen(char filename[256], const char *mode) {
     FILE *outfile;
 
 #ifdef _WIN32
@@ -968,12 +967,10 @@ INTERNAL FILE *zint_out_fopen(const char filename[256], const char *mode) {
         char dirname[256];
         char *d;
 #ifdef _WIN32
-        char *dirend = strrchr(filename, '\\');
-        if (!dirend) {
-            dirend = strrchr(filename, '/');
-        }
+        char *const dirend_backslash = strrchr(filename, '\\');
+        char *const dirend = dirend_backslash ? dirend_backslash : strrchr(filename, '/');
 #else
-        char *dirend = strrchr(filename, '/');
+        char *const dirend = strrchr(filename, '/');
 #endif
         if (!dirend) {
             return outfile;

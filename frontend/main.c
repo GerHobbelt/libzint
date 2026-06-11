@@ -184,8 +184,8 @@ static void usage(const int no_png, const int have_gs1syntaxengine) {
            "  --compliantheight     Warn if height not compliant, and use standard default\n"
            "  -d, --data=DATA       Set the symbol data content (segment 0)\n", stdout);
     fputs( "  --direct              Send output to stdout\n"
-           "  --dmb256=INTEGER      Start Data Matrix in Base 256 for given length (0 all)\n"
-           "  --dmc40=INTEGER       Start Data Matrix in C40 mode for given length (0 all)\n"
+           "  --dmb256[=INTEGER]    Start Data Matrix in Base 256 for given length (0 all)\n"
+           "  --dmc40[=INTEGER]     Start Data Matrix in C40 mode for given length (0 all)\n"
            "  --dmiso144            Use ISO format for 144x144 Data Matrix symbols\n"
            "  --dmre                Allow Data Matrix Rectangular Extended\n", stdout);
     fputs( "  --dotsize=NUMBER      Set radius of dots in dotty mode\n"
@@ -228,8 +228,8 @@ if (have_gs1syntaxengine) {
            "  --rotate=INTEGER      Rotate symbol by INTEGER (0, 90, 180, 270) degrees\n"
            "  --rows=INTEGER        Set number of rows (Codablock F/PDF417)\n", stdout);
     fputs( "  --scale=NUMBER        Adjust size of X-dimension\n"
-           "  --scalexdimdp=X[,R]   Adjust size to X-dimension X at resolution R\n"
-           "  --scmvv=INTEGER       Prefix SCM with \"[)>\\R01\\Gvv\" (vv is INTEGER) (MaxiCode)\n"
+           "  --scalexdimdp[=X[,R]] Adjust size to X-dimension X at resolution R\n"
+           "  --scmvv[=INTEGER]     Prefix SCM with \"[)>\\R01\\Gvv\" (vv is INTEGER) (MaxiCode)\n"
            "  --secure=INTEGER      Set error correction level (ECC)\n"
            "  --segN=ECI,DATA       Set the ECI & data content for segment N, where N 1 to 9\n", stdout);
     fputs( "  --separator=INTEGER   Set height of row separator bars (stacked symbologies)\n"
@@ -627,7 +627,9 @@ static int get_barcode_name(const char *const barcode_name) {
         { BARCODE_DBAR_LTD_CC, "rssltdcc" }, /* Synonym */
         { BARCODE_C25STANDARD, "standardcode2of5" }, /* Synonym */
         { BARCODE_TELEPEN, "telepen" },
+        { BARCODE_TELEPEN, "telepenalpha" }, /* Synonym */
         { BARCODE_TELEPEN_NUM, "telepennum" },
+        { BARCODE_TELEPEN_NUM, "telepennumeric" }, /* Synonym */
         { BARCODE_ULTRA, "ultra" },
         { BARCODE_ULTRA, "ultracode" }, /* Synonym */
         { BARCODE_UPCA, "upca" },
@@ -736,8 +738,8 @@ static int supported_filetype(const char *const filetype, const int no_png, int 
 }
 
 /* Get file extension, excluding those of more than 4 letters */
-static char *get_extension(const char *const file) {
-    char *const dot = strrchr(file, '.');
+static const char *get_extension(const char *const file) {
+    const char *const dot = strrchr(file, '.');
     if (dot && strlen(file) - (dot - file) <= 5) { /* Only recognize up to 4 letter extensions */
         return dot + 1;
     }
@@ -755,7 +757,7 @@ static void set_extension(char file[256], const char *const filetype) {
     cpy_str(lc_filetype, ARRAY_SIZE(lc_filetype), filetype);
     to_lower(lc_filetype);
 
-    extension = get_extension(file);
+    extension = (char *) get_extension(file);
     if (extension) {
         cpy_str(lc_extension, ARRAY_SIZE(lc_extension), extension);
         to_lower(lc_extension);
@@ -830,7 +832,7 @@ static int validate_scalexdimdp(const char *const arg, float *const p_x_dim_mm, 
     int units_i; /* For `validate_units()` */
     char *units_err; /* For `validate_units()` */
     char errbuf_float[ERRBUF_SIZE]; /* For `validate_float()` */
-    const char *comma = strchr(arg, ',');
+    const char *comma = arg ? strchr(arg, ',') : NULL;
     if (comma) {
         if (comma == arg || comma - arg >= ARRAY_SIZE(x_buf)) {
             cpy_str(errbuf, ERRBUF_SIZE, comma == arg ? "scalexdimdp X-dim too short" : "scalexdimdp X-dim too long");
@@ -845,11 +847,11 @@ static int validate_scalexdimdp(const char *const arg, float *const p_x_dim_mm, 
         }
         cpy_str(r_buf, ARRAY_SIZE(r_buf), comma);
     } else {
-        if (!*arg || strlen(arg) >= ARRAY_SIZE(x_buf)) {
+        if (arg && (!*arg || strlen(arg) >= ARRAY_SIZE(x_buf))) {
             cpy_str(errbuf, ERRBUF_SIZE, !*arg ?  "scalexdimdp X-dim too short" : "scalexdimdp X-dim too long");
             return 0;
         }
-        cpy_str(x_buf, ARRAY_SIZE(x_buf), arg);
+        cpy_str(x_buf, ARRAY_SIZE(x_buf), arg ? arg : "0");
     }
     if ((units_i = validate_units(x_buf, x_units, ARRAY_SIZE(x_units), &units_err)) < 0) {
         cpycat_str(errbuf, ERRBUF_SIZE, "scalexdimdp X-dim unknown units: ", units_err);
@@ -1517,7 +1519,7 @@ int main(int argc, char **argv) {
     int val;
     int i;
     int ret;
-    char *outfile_extension;
+    const char *outfile_extension;
     int data_arg_num = 0;
     int seg_count = 0;
     float x_dim_mm = 0.0f, dpmm = 0.0f;
@@ -1583,8 +1585,8 @@ int main(int argc, char **argv) {
             {"compliantheight", 0, NULL, OPT_COMPLIANTHEIGHT},
             {"data", 1, NULL, 'd'},
             {"direct", 0, NULL, OPT_DIRECT},
-            {"dmb256", 1, NULL, OPT_DMB256},
-            {"dmc40", 1, NULL, OPT_DMC40},
+            {"dmb256", 2, NULL, OPT_DMB256},
+            {"dmc40", 2, NULL, OPT_DMC40},
             {"dmiso144", 0, NULL, OPT_DMISO144},
             {"dmre", 0, NULL, OPT_DMRE},
             {"dotsize", 1, NULL, OPT_DOTSIZE},
@@ -1627,8 +1629,8 @@ int main(int argc, char **argv) {
             {"rotate", 1, NULL, OPT_ROTATE},
             {"rows", 1, NULL, OPT_ROWS},
             {"scale", 1, NULL, OPT_SCALE},
-            {"scalexdimdp", 1, NULL, OPT_SCALEXDIM},
-            {"scmvv", 1, NULL, OPT_SCMVV},
+            {"scalexdimdp", 2, NULL, OPT_SCALEXDIM},
+            {"scmvv", 2, NULL, OPT_SCMVV},
             {"secure", 1, NULL, OPT_SECURE},
             {"seg1", 1, NULL, OPT_SEG1},
             {"seg2", 1, NULL, OPT_SEG2},
@@ -1741,7 +1743,9 @@ int main(int argc, char **argv) {
                 my_symbol->output_options |= BARCODE_STDOUT;
                 break;
             case OPT_DMB256:
-                if (!validate_int(optarg, -1 /*len*/, &val)) {
+                if (!optarg) {
+                    val = 0;
+                } else if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 158: Invalid Data Matrix Base 256 mode length value (digits only)\n");
                     return do_exit(ZINT_ERROR_INVALID_OPTION);
                 }
@@ -1756,7 +1760,9 @@ int main(int argc, char **argv) {
                 }
                 break;
             case OPT_DMC40:
-                if (!validate_int(optarg, -1 /*len*/, &val)) {
+                if (!optarg) {
+                    val = 0;
+                } else if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 160: Invalid Data Matrix C40 mode length value (digits only)\n");
                     return do_exit(ZINT_ERROR_INVALID_OPTION);
                 }
@@ -2026,7 +2032,9 @@ int main(int argc, char **argv) {
                 }
                 break;
             case OPT_SCMVV:
-                if (!validate_int(optarg, -1 /*len*/, &val)) {
+                if (!optarg) {
+                    val = 96; /* ASC MH10/SC 8 */
+                } else if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 149: Invalid Structured Carrier Message version value (digits only)\n");
                     return do_exit(ZINT_ERROR_INVALID_OPTION);
                 }

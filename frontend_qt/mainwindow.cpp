@@ -52,21 +52,30 @@
 #define QSL     QStringLiteral
 #define QSEmpty QLatin1String("")
 
+#if QT_VERSION < 0x60000
+#define QZINT_SIZETYPE  int
+#else
+#define QZINT_SIZETYPE  qsizetype
+#endif
+
 static const int tempMessageTimeout = 2000;
 
+// Suppress gcc-16 (C23) warning -Wdeprecated-enum-enum-conversion
+#define QKC(M, K)   (int(M) | int(K))
+
 // Use on Windows also (i.e. not using QKeySequence::Quit)
-Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, quitKeySeq, (Qt::CTRL | Qt::Key_Q))
+Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, quitKeySeq, QKC(Qt::CTRL, Qt::Key_Q))
 
-Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, openCLISeq, (Qt::SHIFT | Qt::CTRL | Qt::Key_C))
+Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, openCLISeq, QKC(Qt::SHIFT | Qt::CTRL, Qt::Key_C))
 
-Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copyBMPSeq, (Qt::SHIFT | Qt::CTRL | Qt::Key_B))
-Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copyEMFSeq, (Qt::SHIFT | Qt::CTRL | Qt::Key_E))
-Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copyGIFSeq, (Qt::SHIFT | Qt::CTRL | Qt::Key_G))
-Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copyPNGSeq, (Qt::SHIFT | Qt::CTRL | Qt::Key_P))
-Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copySVGSeq, (Qt::SHIFT | Qt::CTRL | Qt::Key_S))
-Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copyTIFSeq, (Qt::SHIFT | Qt::CTRL | Qt::Key_T))
+Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copyBMPSeq, QKC(Qt::SHIFT | Qt::CTRL, Qt::Key_B))
+Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copyEMFSeq, QKC(Qt::SHIFT | Qt::CTRL, Qt::Key_E))
+Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copyGIFSeq, QKC(Qt::SHIFT | Qt::CTRL, Qt::Key_G))
+Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copyPNGSeq, QKC(Qt::SHIFT | Qt::CTRL, Qt::Key_P))
+Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copySVGSeq, QKC(Qt::SHIFT | Qt::CTRL, Qt::Key_S))
+Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, copyTIFSeq, QKC(Qt::SHIFT | Qt::CTRL, Qt::Key_T))
 
-Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, factoryResetSeq, (Qt::SHIFT | Qt::CTRL | Qt::Key_R))
+Q_GLOBAL_STATIC_WITH_ARGS(QKeySequence, factoryResetSeq, QKC(Qt::SHIFT | Qt::CTRL, Qt::Key_R))
 
 // RGB hexadecimal 6 or 8 in length or CMYK comma-separated decimal percentages "C,M,Y,K"
 static const QString colorREstr(QSL("^([0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?)|(((100|[0-9]{0,2}),){3}(100|[0-9]{0,2}))$"));
@@ -90,9 +99,9 @@ static QColor str_to_qcolor(const QString &str)
     QColor color;
     int r, g, b, a;
     if (str.contains(',')) {
-        int comma1 = str.indexOf(',');
-        int comma2 = str.indexOf(',', comma1 + 1);
-        int comma3 = str.indexOf(',', comma2 + 1);
+        QZINT_SIZETYPE comma1 = str.indexOf(',');
+        QZINT_SIZETYPE comma2 = str.indexOf(',', comma1 + 1);
+        QZINT_SIZETYPE comma3 = str.indexOf(',', comma2 + 1);
         int black = 100 - str.mid(comma3 + 1).toInt();
         int val = 100 - str.mid(0, comma1).toInt();
         r = (int) roundf((0xFF * val * black) / 10000.0f);
@@ -186,7 +195,7 @@ static const struct bstyle_item bstyle_items[] = {
     { QSL("Royal Mail 2D Mailmark (CMDM) (Data Matrix)"), BARCODE_MAILMARK_2D },
     { QSL("Royal Mail 4-state Customer Code (RM4SCC)"), BARCODE_RM4SCC },
     { QSL("Royal Mail 4-state Mailmark"), BARCODE_MAILMARK_4S },
-    { QSL("Telepen"), BARCODE_TELEPEN },
+    { QSL("Telepen Alpha"), BARCODE_TELEPEN },
     { QSL("Telepen Numeric"), BARCODE_TELEPEN_NUM },
     { QSL("UK Plessey"), BARCODE_PLESSEY },
     { QSL("Ultracode"), BARCODE_ULTRA },
@@ -204,13 +213,13 @@ static const struct bstyle_item bstyle_items[] = {
 void MainWindow::mac_hack_vLayouts(QWidget *win)
 {
     QList<QVBoxLayout *> vlayouts = win->findChildren<QVBoxLayout *>();
-    for (int i = 0, vcnt = vlayouts.size(); i < vcnt; i++) {
+    for (int i = 0, vcnt = (int) vlayouts.size(); i < vcnt; i++) {
         if (vlayouts[i]->objectName() == "vLayoutData" || vlayouts[i]->objectName() == "vLayoutComposite"
                 || vlayouts[i]->objectName() == "vLayoutSegs") {
             vlayouts[i]->setSpacing(2);
             // If set spacing on QVBoxLayout then it seems its QHBoxLayout children inherit this so undo
             QList<QHBoxLayout *> hlayouts = vlayouts[i]->findChildren<QHBoxLayout *>();
-            for (int j = 0, hcnt = hlayouts.size(); j < hcnt; j++) {
+            for (int j = 0, hcnt = (int) hlayouts.size(); j < hcnt; j++) {
                 hlayouts[j]->setSpacing(8);
             }
         }
@@ -223,7 +232,7 @@ void MainWindow::mac_hack_statusBars(QWidget *win, const char* name)
     QList<QStatusBar *> sbars = name ? win->findChildren<QStatusBar *>(name) : win->findChildren<QStatusBar *>();
     QColor bgColor = QGuiApplication::palette().window().color();
     QString sbarSS = QSL("QStatusBar {background-color:") + bgColor.name() + QSL(";}");
-    for (int i = 0, cnt = sbars.size(); i < cnt; i++) {
+    for (int i = 0, cnt = (int) sbars.size(); i < cnt; i++) {
         sbars[i]->setStyleSheet(sbarSS);
     }
 }
@@ -751,7 +760,7 @@ bool MainWindow::save()
     }
 
     QString nativePathname = QDir::toNativeSeparators(pathname);
-    int lastSeparator = nativePathname.lastIndexOf(QDir::separator());
+    QZINT_SIZETYPE lastSeparator = nativePathname.lastIndexOf(QDir::separator());
     QString dirname = nativePathname.mid(0, lastSeparator);
     if (dirname.isEmpty()) {
         /*: %1 is path saved to */
@@ -1447,13 +1456,13 @@ void MainWindow::filter_symbologies()
     /* QString::split() only introduced Qt 5.14, so too new for us to use */
     QStringList filter_list;
     if (!filter.isEmpty()) {
-        int i, j;
+        QZINT_SIZETYPE i, j;
         for (i = 0; (j = filter.indexOf(' ', i)) != -1; i = j + 1) {
             filter_list << filter.mid(i, j - i);
         }
         filter_list << filter.mid(i);
     }
-    int filter_cnt = filter_list.size();
+    int filter_cnt = (int) filter_list.size();
     int cnt = ARRAY_SIZE(bstyle_items);
 
     if (filter_cnt) {
@@ -2286,6 +2295,30 @@ void MainWindow::change_options()
             vLayoutSpecific->addWidget(m_optionWidget);
             grpSpecific->show();
             connect(get_widget(QSL("chkPlesseyShowChecks")), SIGNAL(toggled(bool)), SLOT(update_preview()));
+        }
+
+    } else if (symbology == BARCODE_TELEPEN) {
+        QFile file(QSL(":/grpTelepen.ui"));
+        if (file.open(QIODevice::ReadOnly)) {
+            m_optionWidget = uiload.load(&file);
+            file.close();
+            load_sub_settings(settings, symbology);
+            vLayoutSpecific->addWidget(m_optionWidget);
+            set_smaller_font(QSL("noteTelepenDLE"));
+            grpSpecific->show();
+            connect(get_widget(QSL("chkTelepenAIM")), SIGNAL(toggled(bool)), SLOT(update_preview()));
+        }
+
+    } else if (symbology == BARCODE_TELEPEN_NUM) {
+        QFile file(QSL(":/grpTelepenNum.ui"));
+        if (file.open(QIODevice::ReadOnly)) {
+            m_optionWidget = uiload.load(&file);
+            file.close();
+            load_sub_settings(settings, symbology);
+            vLayoutSpecific->addWidget(m_optionWidget);
+            set_smaller_font(QSL("noteTelepenNumDLE"));
+            grpSpecific->show();
+            connect(get_widget(QSL("chkTelepenNumAIM")), SIGNAL(toggled(bool)), SLOT(update_preview()));
         }
 
     } else if (symbology == BARCODE_ULTRA) {
@@ -3389,6 +3422,20 @@ void MainWindow::update_preview()
         case BARCODE_PLESSEY:
             m_bc.bc.setSymbol(BARCODE_PLESSEY);
             if (get_chk_val(QSL("chkPlesseyShowChecks"))) {
+                m_bc.bc.setOption2(1);
+            }
+            break;
+
+        case BARCODE_TELEPEN:
+            m_bc.bc.setSymbol(BARCODE_TELEPEN);
+            if (get_chk_val(QSL("chkTelepenAIM"))) {
+                m_bc.bc.setOption2(1);
+            }
+            break;
+
+        case BARCODE_TELEPEN_NUM:
+            m_bc.bc.setSymbol(BARCODE_TELEPEN_NUM);
+            if (get_chk_val(QSL("chkTelepenNumAIM"))) {
                 m_bc.bc.setOption2(1);
             }
             break;
@@ -4688,6 +4735,14 @@ void MainWindow::save_sub_settings(QSettings &settings, int symbology)
             settings.setValue(QSL("studio/bc/plessey/chk_show_checks"), get_chk_val(QSL("chkPlesseyShowChecks")));
             break;
 
+        case BARCODE_TELEPEN:
+            settings.setValue(QSL("studio/bc/telepen/chk_aim"), get_chk_val(QSL("chkTelepenAIM")));
+            break;
+
+        case BARCODE_TELEPEN_NUM:
+            settings.setValue(QSL("studio/bc/telepen_num/chk_aim"), get_chk_val(QSL("chkTelepenNumAIM")));
+            break;
+
         case BARCODE_ULTRA:
             settings.setValue(QSL("studio/bc/ultra/autoresizing"), get_rad_grp_index(
                 QStringList() << QSL("radUltraAuto") << QSL("radUltraEcc")));
@@ -5165,6 +5220,14 @@ void MainWindow::load_sub_settings(QSettings &settings, int symbology)
 
         case BARCODE_PLESSEY:
             set_chk_from_setting(settings, QSL("studio/bc/plessey/chk_show_checks"), QSL("chkPlesseyShowChecks"));
+            break;
+
+        case BARCODE_TELEPEN:
+            set_chk_from_setting(settings, QSL("studio/bc/telepen/chk_aim"), QSL("chkTelepenAIM"));
+            break;
+
+        case BARCODE_TELEPEN_NUM:
+            set_chk_from_setting(settings, QSL("studio/bc/telepen_num/chk_aim"), QSL("chkTelepenNumAIM"));
             break;
 
         case BARCODE_ULTRA:

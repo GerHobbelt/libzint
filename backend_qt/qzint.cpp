@@ -43,6 +43,12 @@
 #define QSL     QStringLiteral
 #define QSEmpty QLatin1String("")
 
+#if QT_VERSION < 0x60000
+#define QZINT_SIZETYPE  int
+#else
+#define QZINT_SIZETYPE  qsizetype
+#endif
+
 namespace Zint {
     static const int maxSegs = 256;
     static const int maxCLISegs = 10; /* CLI restricted to 10 segments (including main data) */
@@ -98,9 +104,9 @@ namespace Zint {
         QColor color;
         int r, g, b, a;
         if (text.contains(',')) {
-            qsizetype comma1 = text.indexOf(',');
-            qsizetype comma2 = text.indexOf(',', comma1 + 1);
-            qsizetype comma3 = text.indexOf(',', comma2 + 1);
+            QZINT_SIZETYPE comma1 = text.indexOf(',');
+            QZINT_SIZETYPE comma2 = text.indexOf(',', comma1 + 1);
+            QZINT_SIZETYPE comma3 = text.indexOf(',', comma2 + 1);
             int black = 100 - text.mid(comma3 + 1).toInt();
             int val = 100 - text.mid(0, comma1).toInt();
             r = (int) roundf((0xFF * val * black) / 10000.0f);
@@ -1525,6 +1531,7 @@ namespace Zint {
                 || m_symbol == BARCODE_QRCODE || m_symbol == BARCODE_HIBC_QR || m_symbol == BARCODE_MICROQR
                 || m_symbol == BARCODE_RMQR || m_symbol == BARCODE_GRIDMATRIX || m_symbol == BARCODE_HANXIN
                 || m_symbol == BARCODE_CHANNEL || m_symbol == BARCODE_CODEONE || m_symbol == BARCODE_CODE93
+                || m_symbol == BARCODE_TELEPEN || m_symbol == BARCODE_TELEPEN_NUM
                 || m_symbol == BARCODE_ULTRA || m_symbol == BARCODE_VIN) {
             arg_int(cmd, "--vers=", option2());
         } else if (m_symbol == BARCODE_DAFT && option2() != 250) {
