@@ -106,7 +106,7 @@ static void types(void) {
           "28 FLAT        Flattermarken           104 HIBC_QR        HIBC QR Code\n"
           "29 DBAR_OMN    GS1 DataBar Omni        106 HIBC_PDF       HIBC PDF417\n"
           "30 DBAR_LTD    GS1 DataBar Limited     108 HIBC_MICPDF    HIBC MicroPDF417\n"
-          "31 DBAR_EXP    GS1 DataBar Expanded    110 HIBC_BLOCKF    HIBC Codablock-F\n", stdout);
+          "31 DBAR_EXP    GS1 DataBar Expanded    110 HIBC_BLOCKF    HIBC Codablock F\n", stdout);
     fputs("32 TELEPEN     Telepen Alpha           112 HIBC_AZTEC     HIBC Aztec Code\n"
           "34 UPCA        UPC-A                   115 DOTCODE        DotCode\n"
           "35 UPCA_CHK    UPC-A + Check Digit     116 HANXIN         Han Xin Code\n"
@@ -134,7 +134,7 @@ static void types(void) {
           "71 DATAMATRIX  Data Matrix             147 DXFILMEDGE     DX Film Edge Barcode\n", stdout);
     fputs("72 EAN14       EAN-14 (GS1-128 based)  148 EAN8_CC        Composite EAN-8\n"
           "73 VIN         Vehicle Information No. 149 EAN13_CC       Composite EAN-13\n"
-          "74 CODABLOCKF  Codablock-F\n", stdout);
+          "74 CODABLOCKF  Codablock F\n", stdout);
 }
 
 /* Output version information */
@@ -184,16 +184,18 @@ static void usage(const int no_png, const int have_gs1syntaxengine) {
            "  --compliantheight     Warn if height not compliant, and use standard default\n"
            "  -d, --data=DATA       Set the symbol data content (segment 0)\n", stdout);
     fputs( "  --direct              Send output to stdout\n"
+           "  --dmb256=INTEGER      Start Data Matrix in Base 256 for given length (0 all)\n"
+           "  --dmc40=INTEGER       Start Data Matrix in C40 mode for given length (0 all)\n"
            "  --dmiso144            Use ISO format for 144x144 Data Matrix symbols\n"
-           "  --dmre                Allow Data Matrix Rectangular Extended\n"
-           "  --dotsize=NUMBER      Set radius of dots in dotty mode\n"
-           "  --dotty               Use dots instead of squares for matrix symbols\n", stdout);
-    fputs( "  --dump                Dump hexadecimal representation to stdout\n"
+           "  --dmre                Allow Data Matrix Rectangular Extended\n", stdout);
+    fputs( "  --dotsize=NUMBER      Set radius of dots in dotty mode\n"
+           "  --dotty               Use dots instead of squares for matrix symbols\n"
+           "  --dump                Dump hexadecimal representation to stdout\n"
            "  -e, --ecinos          Display ECI (Extended Channel Interpretation) table\n"
-           "  --eci=INTEGER         Set the ECI code for the data (segment 0)\n"
-           "  --embedfont           Embed font in vector output (SVG only)\n"
-           "  --esc                 Process escape sequences in input data\n", stdout);
-    fputs( "  --extraesc            Process symbology-specific escape sequences (Code 128)\n"
+           "  --eci=INTEGER         Set the ECI code for the data (segment 0)\n", stdout);
+    fputs( "  --embedfont           Embed font in vector output (SVG only)\n"
+           "  --esc                 Process escape sequences in input data\n"
+           "  --extraesc            Process extra symbology-specific escape sequences\n"
            "  --fast                Use faster encodation or other shortcuts if available\n"
            "  --fg=COLOUR           Specify a foreground colour (as RGB(A) or \"C,M,Y,K\")\n", stdout);
     printf("  --filetype=TYPE       Set output file type BMP/EMF/EPS/GIF/PCX%s/SVG/TIF/TXT\n", no_png_type);
@@ -205,17 +207,17 @@ static void usage(const int no_png, const int have_gs1syntaxengine) {
 if (have_gs1syntaxengine) {
     fputs( "  --gs1strict           Use GS1 Syntax Engine to strictly validate GS1 data\n", stdout);
 }
-    fputs( "  --gssep               Use separator GS for GS1 (Data Matrix)\n", stdout);
-    fputs( "  --guarddescent=NUMBER Set height of guard bar descent in X-dims (EAN/UPC)\n"
+    fputs( "  --gssep               Use separator GS for GS1 (Data Matrix)\n"
+           "  --guarddescent=NUMBER Set height of guard bar descent in X-dims (EAN/UPC)\n"
            "  --guardwhitespace     Add quiet zone indicators (\"<\"/\">\") to HRT (EAN/UPC)\n"
            "  -h, --help            Display help message\n"
-           "  --height=NUMBER       Set height of symbol in multiples of X-dimension\n"
-           "  --heightperrow        Treat height as per-row\n", stdout);
-    fputs( "  -i, --input=FILE      Read input data from FILE\n"
+           "  --height=NUMBER       Set height of symbol in multiples of X-dimension\n", stdout);
+    fputs( "  --heightperrow        Treat height as per-row\n"
+           "  -i, --input=FILE      Read input data from FILE\n"
            "  --init                Create Reader Initialisation (Programming) symbol\n"
            "  --mask=INTEGER        Set masking pattern to use (QR/Han Xin/DotCode)\n"
-           "  --mirror              Use batch data to determine filename\n"
-           "  --mode=INTEGER        Set encoding mode (MaxiCode/Composite)\n", stdout);
+           "  --mirror              Use batch data to determine filename\n", stdout);
+    fputs( "  --mode=INTEGER        Set encoding mode (MaxiCode/Composite)\n", stdout);
     printf("  --nobackground        Remove background (EMF/EPS/GIF%s/SVG/TIF only)\n", no_png_type);
     fputs( "  --noquietzones        Disable default quiet zones\n"
            "  --notext              Remove human readable text (HRT)\n", stdout);
@@ -224,7 +226,7 @@ if (have_gs1syntaxengine) {
            "  --quietzones          Add compliant quiet zones\n"
            "  -r, --reverse         Reverse colours (white on black)\n"
            "  --rotate=INTEGER      Rotate symbol by INTEGER (0, 90, 180, 270) degrees\n"
-           "  --rows=INTEGER        Set number of rows (Codablock-F/PDF417)\n", stdout);
+           "  --rows=INTEGER        Set number of rows (Codablock F/PDF417)\n", stdout);
     fputs( "  --scale=NUMBER        Adjust size of X-dimension\n"
            "  --scalexdimdp=X[,R]   Adjust size to X-dimension X at resolution R\n"
            "  --scmvv=INTEGER       Prefix SCM with \"[)>\\R01\\Gvv\" (vv is INTEGER) (MaxiCode)\n"
@@ -236,11 +238,12 @@ if (have_gs1syntaxengine) {
            "  --structapp=I,C[,ID]  Set Structured Append info (I index, C count)\n"
            "  -t, --types           Display table of barcode types\n", stdout);
     fputs( "  --textgap=NUMBER      Adjust gap between barcode and HRT in multiples of X-dim\n"
+           "  --verbose             Output debug info to stdout\n"
            "  --vers=INTEGER        Set symbol version (size, check digits, other options)\n"
            "  -v, --version         Display Zint version\n"
-           "  --vwhitesp=INTEGER    Set height of vertical whitespace in multiples of X-dim\n"
-           "  -w, --whitesp=INTEGER Set width of horizontal whitespace in multiples of X-dim\n", stdout);
-    fputs( "  --werror              Convert all warnings into errors\n", stdout);
+           "  --vwhitesp=INTEGER    Set height of vertical whitespace in multiples of X-dim\n", stdout);
+    fputs( "  -w, --whitesp=INTEGER Set width of horizontal whitespace in multiples of X-dim\n"
+           "  --werror              Convert all warnings into errors\n", stdout);
 }
 
 /* Display supported ECI codes */
@@ -1137,7 +1140,7 @@ static int batch_process(struct zint_symbol *const symbol, const char *const fil
                     }
 
                     /* Skip escape characters */
-                    if ((buffer[i] == '\\') && (symbol->input_mode & ESCAPE_MODE)) {
+                    if (buffer[i] == '\\' && (symbol->input_mode & ESCAPE_MODE)) {
                         i++;
                         if (buffer[i] == 'x') {
                             i += 2;
@@ -1182,9 +1185,9 @@ static int batch_process(struct zint_symbol *const symbol, const char *const fil
                     break;
                 }
                 character = (unsigned char) intChar;
-            } while ((!feof(file)) && (character != '\n'));
+            } while (!feof(file) && character != '\n');
         }
-    } while ((!feof(file)) && (line_count < 2000000000));
+    } while (!feof(file) && line_count < 2000000000);
 
     if (character != '\n') {
         fprintf(stderr, "Warning 104: No newline at end of input file, last line **IGNORED**\n");
@@ -1255,6 +1258,7 @@ static void win_free_args(void) {
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+/* SPDX-License-Identifier: LGPL-2.1-or-later */
 static WCHAR **win_CommandLineToArgvW(const WCHAR *cmdline, int *numargs) {
     int qcount, bcount;
     const WCHAR *s;
@@ -1487,7 +1491,9 @@ static int do_exit(const int error_number) {
     return error_number; /* Not reached */
 }
 
-typedef struct { const char *arg; int opt; } arg_opt;
+struct arg_opt { const char *arg; int opt; };
+
+#define OPT_ARGS_MAX    300 /* Make greater than 200 (max no. of stacked rows) as that's a better error message */
 
 int main(int argc, char **argv) {
     struct zint_symbol *my_symbol;
@@ -1517,7 +1523,7 @@ int main(int argc, char **argv) {
     float x_dim_mm = 0.0f, dpmm = 0.0f;
     float float_opt;
     char errbuf[ERRBUF_SIZE]; /* For `validate_float/()`, `validate_scalexdimdp()` etc. */
-    arg_opt *const arg_opts = (arg_opt *) z_alloca(sizeof(arg_opt) * argc);
+    struct arg_opt *const arg_opts = (struct arg_opt *) z_alloca(sizeof(struct arg_opt) * OPT_ARGS_MAX);
 
     const int no_png = ZBarcode_NoPng();
     const int have_gs1syntaxengine = ZBarcode_HaveGS1SyntaxEngine();
@@ -1544,7 +1550,7 @@ int main(int argc, char **argv) {
             OPT_ADDONGAP = 128, OPT_AZFULL,
             OPT_BATCH, OPT_BINARY, OPT_BG, OPT_BIND, OPT_BIND_TOP, OPT_BOLD, OPT_BORDER, OPT_BOX,
             OPT_CMYK, OPT_COLS, OPT_COMPLIANTHEIGHT,
-            OPT_DIRECT, OPT_DMISO144, OPT_DMRE, OPT_DOTSIZE, OPT_DOTTY, OPT_DUMP,
+            OPT_DIRECT, OPT_DMISO144, OPT_DMRE, OPT_DMB256, OPT_DMC40, OPT_DOTSIZE, OPT_DOTTY, OPT_DUMP,
             OPT_ECI, OPT_EMBEDFONT, OPT_ESC, OPT_EXTRAESC, OPT_FAST, OPT_FG, OPT_FILETYPE, OPT_FULLMULTIBYTE,
             OPT_GS1, OPT_GS1NOCHECK, OPT_GS1PARENS, OPT_GS1RAW, OPT_GS1STRICT /*GS1SYNTAXENGINE_MODE*/,
             OPT_GSSEP, OPT_GUARDDESCENT, OPT_GUARDWHITESPACE,
@@ -1577,6 +1583,8 @@ int main(int argc, char **argv) {
             {"compliantheight", 0, NULL, OPT_COMPLIANTHEIGHT},
             {"data", 1, NULL, 'd'},
             {"direct", 0, NULL, OPT_DIRECT},
+            {"dmb256", 1, NULL, OPT_DMB256},
+            {"dmc40", 1, NULL, OPT_DMC40},
             {"dmiso144", 0, NULL, OPT_DMISO144},
             {"dmre", 0, NULL, OPT_DMRE},
             {"dotsize", 1, NULL, OPT_DOTSIZE},
@@ -1640,7 +1648,7 @@ int main(int argc, char **argv) {
 #endif
             {"textgap", 1, NULL, OPT_TEXTGAP},
             {"types", 0, NULL, 't'},
-            {"verbose", 0, NULL, OPT_VERBOSE}, /* Currently undocumented, output some debug info */
+            {"verbose", 0, NULL, OPT_VERBOSE},
             {"vers", 1, NULL, OPT_VERS},
             {"version", 0, NULL, 'v'},
             {"vwhitesp", 1, NULL, OPT_VWHITESP},
@@ -1717,7 +1725,7 @@ int main(int argc, char **argv) {
                     fprintf(stderr, "Error 131: Invalid columns value (digits only)\n");
                     return do_exit(ZINT_ERROR_INVALID_OPTION);
                 }
-                if ((val >= 1) && (val <= 200)) {
+                if (val >= 1 && val <= 200) {
                     my_symbol->option_2 = val;
                 } else {
                     fprintf(stderr, "Warning 111: Number of columns '%d' out of range (1 to 200), **IGNORED**\n",
@@ -1732,13 +1740,46 @@ int main(int argc, char **argv) {
             case OPT_DIRECT:
                 my_symbol->output_options |= BARCODE_STDOUT;
                 break;
+            case OPT_DMB256:
+                if (!validate_int(optarg, -1 /*len*/, &val)) {
+                    fprintf(stderr, "Error 158: Invalid Data Matrix Base 256 mode length value (digits only)\n");
+                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                }
+                /* C40 overrides Base 256 */
+                if ((my_symbol->option_3 & DM_B256_C40_START_MASK) == DM_C40_START) {
+                    fprintf(stderr, "Warning 159: '--dmc40' already set, '--dmb256' **IGNORED**\n");
+                    fflush(stderr);
+                    warn_number = ZINT_WARN_INVALID_OPTION;
+                } else {
+                    my_symbol->option_1 = val;
+                    my_symbol->option_3 = DM_B256_START | (my_symbol->option_3 & ~DM_B256_C40_START_MASK);
+                }
+                break;
+            case OPT_DMC40:
+                if (!validate_int(optarg, -1 /*len*/, &val)) {
+                    fprintf(stderr, "Error 160: Invalid Data Matrix C40 mode length value (digits only)\n");
+                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                }
+                /* C40 overwrites Base 256 */
+                if ((my_symbol->option_3 & DM_B256_C40_START_MASK) == DM_B256_START) {
+                    fprintf(stderr, "Warning 161: previous '--dmb256' overwritten by '--dmc40'\n");
+                    fflush(stderr);
+                    warn_number = ZINT_WARN_INVALID_OPTION;
+                }
+                my_symbol->option_1 = val;
+                my_symbol->option_3 = DM_C40_START | (my_symbol->option_3 & ~DM_B256_C40_START_MASK);
+                break;
             case OPT_DMISO144:
                 my_symbol->option_3 |= DM_ISO_144;
                 break;
             case OPT_DMRE:
-                /* Square overwrites DMRE */
-                if ((my_symbol->option_3 & 0x7F) != DM_SQUARE) {
-                    my_symbol->option_3 = DM_DMRE | (my_symbol->option_3 & ~0x7F);
+                /* Square overrides DMRE */
+                if ((my_symbol->option_3 & DM_SQUARE_DMRE_MASK) != DM_SQUARE) {
+                    my_symbol->option_3 = DM_DMRE | (my_symbol->option_3 & ~DM_SQUARE_DMRE_MASK);
+                } else {
+                    fprintf(stderr, "Warning 156: '--square' already set, '--dmre' **IGNORED**\n");
+                    fflush(stderr);
+                    warn_number = ZINT_WARN_INVALID_OPTION;
                 }
                 break;
             case OPT_DOTSIZE:
@@ -1944,7 +1985,7 @@ int main(int argc, char **argv) {
                     fprintf(stderr, "Error 132: Invalid rows value (digits only)\n");
                     return do_exit(ZINT_ERROR_INVALID_OPTION);
                 }
-                if ((val >= 1) && (val <= 90)) {
+                if (val >= 1 && val <= 90) {
                     rows = val;
                 } else {
                     fprintf(stderr, "Warning 112: Number of rows '%d' out of range (1 to 90), **IGNORED**\n", val);
@@ -1968,7 +2009,7 @@ int main(int argc, char **argv) {
                 break;
             case OPT_SCALEXDIM:
                 if (!validate_scalexdimdp(optarg, &x_dim_mm, &dpmm, errbuf)) {
-                    fprintf(stderr, "Error 184: %s\n", errbuf);
+                    fprintf(stderr, "Error 189: %s\n", errbuf);
                     return do_exit(ZINT_ERROR_INVALID_OPTION);
                 }
                 if (x_dim_mm > 10.0f || dpmm > 1000.0f) {
@@ -2058,7 +2099,13 @@ int main(int argc, char **argv) {
                 my_symbol->output_options |= SMALL_TEXT;
                 break;
             case OPT_SQUARE:
-                my_symbol->option_3 = DM_SQUARE | (my_symbol->option_3 & ~0x7F);
+                /* Square overwrites DMRE */
+                if ((my_symbol->option_3 & DM_SQUARE_DMRE_MASK) == DM_DMRE) {
+                    fprintf(stderr, "Warning 157: previous '--dmre' overwritten by '--square'\n");
+                    fflush(stderr);
+                    warn_number = ZINT_WARN_INVALID_OPTION;
+                }
+                my_symbol->option_3 = DM_SQUARE | (my_symbol->option_3 & ~DM_SQUARE_DMRE_MASK);
                 break;
             case OPT_STRUCTAPP:
                 memset(&my_symbol->structapp, 0, sizeof(my_symbol->structapp));
@@ -2097,7 +2144,7 @@ int main(int argc, char **argv) {
                     fprintf(stderr, "Error 133: Invalid version value (digits only)\n");
                     return do_exit(ZINT_ERROR_INVALID_OPTION);
                 }
-                if ((val >= 1) && (val <= 999)) {
+                if (val >= 1 && val <= 999) {
                     my_symbol->option_2 = val;
                 } else {
                     fprintf(stderr, "Warning 113: Version value '%d' out of range (1 to 999), **IGNORED**\n", val);
@@ -2171,6 +2218,11 @@ int main(int argc, char **argv) {
 
             case 'd': /* we have some data! */
                 if (batch_mode == 0) {
+                    if (data_arg_num == OPT_ARGS_MAX) {
+                        fprintf(stderr, "Error 129: Too many data args (maximum %d)\n", OPT_ARGS_MAX);
+                        return do_exit(ZINT_ERROR_INVALID_OPTION);
+
+                    }
                     arg_opts[data_arg_num].arg = optarg;
                     arg_opts[data_arg_num].opt = opt;
                     data_arg_num++;
@@ -2184,6 +2236,11 @@ int main(int argc, char **argv) {
 
             case 'i': /* Take data from file */
                 if (batch_mode == 0 || input_cnt == 0) {
+                    if (data_arg_num == OPT_ARGS_MAX) {
+                        fprintf(stderr, "Error 130: Too many data args (maximum %d)\n", OPT_ARGS_MAX);
+                        return do_exit(ZINT_ERROR_INVALID_OPTION);
+
+                    }
                     arg_opts[data_arg_num].arg = optarg;
                     arg_opts[data_arg_num].opt = opt;
                     data_arg_num++;
@@ -2209,6 +2266,7 @@ int main(int argc, char **argv) {
             case '?': {
                     /* Workaround musl `optind` bug - see https://www.openwall.com/lists/musl/2025/12/19/1 */
                     const int idx = optind <= argc ? optind - 1 : argc - 1;
+                    /* NOLINTNEXTLINE(clang-analyzer-security.ArrayBound) disable clang-tidy-23 warning */
                     const char *const arg = argv[idx] ? argv[idx] : "?";
                     if (optopt) {
                         for (i = 0; i < ARRAY_SIZE(long_options) && long_options[i].val != optopt; i++);
@@ -2325,7 +2383,7 @@ int main(int argc, char **argv) {
                 warn_number = ZINT_WARN_INVALID_OPTION;
             }
             error_number = batch_process(my_symbol, arg_opts[0].arg, mirror_mode, filetype, output_given,
-                            rotate_angle);
+                                        rotate_angle);
         } else {
             if (seg_count) {
                 if (data_arg_num > 1) {
@@ -2396,6 +2454,9 @@ int main(int argc, char **argv) {
                     if (error_number < ZINT_ERROR) {
                         error_number = ret;
                     }
+                }
+                if (error_number >= ZINT_ERROR) {
+                    break;
                 }
             }
             if (error_number < ZINT_ERROR) {

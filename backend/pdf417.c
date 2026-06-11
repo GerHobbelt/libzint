@@ -32,9 +32,16 @@
  */
 /* SPDX-License-Identifier: BSD-3-Clause */
 
+/*
+ *********************************************************************************************
+ * TODO: Replace all code adapted from "pdf417.frm" as it was released under GPL v2.0 or later
+ *********************************************************************************************
+ */
+
 /*  This code is adapted from "Code barre PDF 417 / PDF 417 barcode" v2.5.0
     which is Copyright (C) 2004 (Grandzebu).
     The original code (file pdf417.frm) can be downloaded from https://grandzebu.net/informatique/codbar/pdf417.zip */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 
 /* NOTE: symbol->option_1 is used to specify the security level (i.e. control the
    number of check codewords)
@@ -137,10 +144,11 @@ static const char pdf_asciiy[127] = {
 };
 
 /* Automatic sizing table */
-
+/* Number of non-EC CWs from ISO/IEC 24728:2006 Table 1, arranged in ascending order (1st 28),
+   and matching variant (2nd 28) */
 static const char pdf_MicroAutosize[56] = {
-    4, 6, 7, 8, 10, 12, 13, 14, 16, 18, 19, 20, 24, 29, 30, 33, 34, 37, 39, 46, 54, 58, 70, 72, 82, 90, 108, 126,
-    1, 14, 2, 7, 3, 25, 8, 16, 5, 17, 9, 6, 10, 11, 28, 12, 19, 13, 29, 20, 30, 21, 22, 31, 23, 32, 33, 34
+    4,  6, 7, 8, 10, 12, 13, 14, 16, 18, 19, 20, 24, 29, 30, 33, 34, 37, 39, 46, 54, 58, 70, 72, 82, 90, 108, 126,
+    1, 14, 2, 7,  3, 25,  8, 16,  5, 17,  9,  6, 10, 11, 28, 12, 19, 13, 29, 20, 30, 21, 22, 31, 23, 32,  33,  34
 };
 
 /* ISO/IEC 15438:2015 5.1.1 c) 3) Max possible number of characters at error correction level 0
@@ -500,7 +508,6 @@ static void pdf_textprocess(short *chainemc, int *p_mclength, const unsigned cha
         }
     }
 
-    /* 663 */
     *p_curtable = curtable;
     pdf_textprocess_end(chainemc, p_mclength, is_last_seg, chainet, wnet, p_curtable, p_tex_padded);
 }
@@ -1432,13 +1439,11 @@ static int pdf_enc(struct zint_symbol *symbol, struct zint_seg segs[], const int
         bp = z_bin_append_posn(0x1FEA8, 17, pattern, bp); /* Row start */
 
         for (j = 0; j <= cols; j++) {
-            bp = z_bin_append_posn(zint_pdf_bitpattern[offset + dummy[j]], 16, pattern, bp);
-            pattern[bp++] = '0';
+            bp = z_bin_append_posn(((int) zint_pdf_bitpattern[offset + dummy[j]]) << 1, 17, pattern, bp);
         }
 
         if (symbol->symbology != BARCODE_PDF417COMP) {
-            bp = z_bin_append_posn(zint_pdf_bitpattern[offset + dummy[j]], 16, pattern, bp);
-            pattern[bp++] = '0';
+            bp = z_bin_append_posn(((int) zint_pdf_bitpattern[offset + dummy[j]]) << 1, 17, pattern, bp);
             bp = z_bin_append_posn(0x3FA29, 18, pattern, bp); /* Row Stop */
         } else {
             pattern[bp++] = '1'; /* Compact PDF417 Stop pattern */
@@ -1761,23 +1766,20 @@ INTERNAL int zint_micropdf417(struct zint_symbol *symbol, struct zint_seg segs[]
 
         /* Copy the data into codebarre */
         bp = z_bin_append_posn(zint_pdf_rap_side[LeftRAP - 1], 10, pattern, bp);
-        bp = z_bin_append_posn(zint_pdf_bitpattern[offset + chainemc[k]], 16, pattern, bp);
-        pattern[bp++] = '0';
+        bp = z_bin_append_posn(((int) zint_pdf_bitpattern[offset + chainemc[k]]) << 1, 17, pattern, bp);
         if (symbol->option_2 >= 2) {
             if (symbol->option_2 == 3) {
                 bp = z_bin_append_posn(zint_pdf_rap_centre[CentreRAP - 1], 10, pattern, bp);
             }
-            bp = z_bin_append_posn(zint_pdf_bitpattern[offset + chainemc[k + 1]], 16, pattern, bp);
-            pattern[bp++] = '0';
+            bp = z_bin_append_posn(((int) zint_pdf_bitpattern[offset + chainemc[k + 1]]) << 1, 17, pattern, bp);
             if (symbol->option_2 >= 3) {
                 if (symbol->option_2 == 4) {
                     bp = z_bin_append_posn(zint_pdf_rap_centre[CentreRAP - 1], 10, pattern, bp);
                 }
-                bp = z_bin_append_posn(zint_pdf_bitpattern[offset + chainemc[k + 2]], 16, pattern, bp);
-                pattern[bp++] = '0';
+                bp = z_bin_append_posn(((int) zint_pdf_bitpattern[offset + chainemc[k + 2]]) << 1, 17, pattern, bp);
                 if (symbol->option_2 == 4) {
-                    bp = z_bin_append_posn(zint_pdf_bitpattern[offset + chainemc[k + 3]], 16, pattern, bp);
-                    pattern[bp++] = '0';
+                    bp = z_bin_append_posn(((int) zint_pdf_bitpattern[offset + chainemc[k + 3]]) << 1, 17, pattern,
+                                            bp);
                 }
             }
         }

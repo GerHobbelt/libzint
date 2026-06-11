@@ -98,9 +98,9 @@ namespace Zint {
         QColor color;
         int r, g, b, a;
         if (text.contains(',')) {
-            int comma1 = text.indexOf(',');
-            int comma2 = text.indexOf(',', comma1 + 1);
-            int comma3 = text.indexOf(',', comma2 + 1);
+            qsizetype comma1 = text.indexOf(',');
+            qsizetype comma2 = text.indexOf(',', comma1 + 1);
+            qsizetype comma3 = text.indexOf(',', comma2 + 1);
             int black = 100 - text.mid(comma3 + 1).toInt();
             int val = 100 - text.mid(0, comma1).toInt();
             r = (int) roundf((0xFF * val * black) / 10000.0f);
@@ -302,7 +302,7 @@ namespace Zint {
                 QByteArray bstr = m_text.toUtf8();
                 /* Note do our own rotation */
                 m_error = ZBarcode_Encode_and_Buffer_Vector(m_zintSymbol, (unsigned char *) bstr.data(),
-                            bstr.length(), 0);
+                            (int) bstr.length(), 0);
             } else {
                 struct zint_seg segs[maxSegs];
                 std::vector<QByteArray> bstrs;
@@ -960,7 +960,7 @@ namespace Zint {
             cpy_bytearray_left(m_zintSymbol->outfile, filename.toUtf8(), ARRAY_SIZE(m_zintSymbol->outfile) - 1);
             if (m_segs.empty()) {
                 QByteArray bstr = m_text.toUtf8();
-                m_error = ZBarcode_Encode_and_Print(m_zintSymbol, (unsigned char *) bstr.data(), bstr.length(),
+                m_error = ZBarcode_Encode_and_Print(m_zintSymbol, (unsigned char *) bstr.data(), (int) bstr.length(),
                                                     m_rotate_angle);
             } else {
                 struct zint_seg segs[maxSegs];
@@ -985,7 +985,7 @@ namespace Zint {
             cpy_bytearray_left(m_zintSymbol->outfile, filename.toUtf8(), ARRAY_SIZE(m_zintSymbol->outfile) - 1);
             if (m_segs.empty()) {
                 QByteArray bstr = m_text.toUtf8();
-                m_error = ZBarcode_Encode_and_Print(m_zintSymbol, (unsigned char *) bstr.data(), bstr.length(),
+                m_error = ZBarcode_Encode_and_Print(m_zintSymbol, (unsigned char *) bstr.data(), (int) bstr.length(),
                                                     m_rotate_angle);
             } else {
                 struct zint_seg segs[maxSegs];
@@ -1044,7 +1044,7 @@ namespace Zint {
             segs[i].eci = m_segs[i].m_eci;
             bstrs.push_back(m_segs[i].m_text.toUtf8());
             segs[i].source = (unsigned char *) bstrs.back().data();
-            segs[i].length = bstrs.back().length();
+            segs[i].length = (int) bstrs.back().length();
         }
         return i;
     }
@@ -1380,8 +1380,16 @@ namespace Zint {
         }
 
         if (m_symbol == BARCODE_DATAMATRIX || m_symbol == BARCODE_HIBC_DM) {
+            if (option3() & DM_B256_C40_START_MASK) {
+                arg_int(cmd, option3() & DM_B256_START ? "--dmb256=" : "--dmc40=", option1(), true /*allowZero*/);
+            }
             arg_bool(cmd, "--dmiso144", (option3() & DM_ISO_144) == DM_ISO_144);
-            arg_bool(cmd, "--dmre", (option3() & 0x7F) == DM_DMRE);
+            arg_bool(cmd, "--dmre", (option3() & DM_SQUARE_DMRE_MASK) == DM_DMRE);
+        } else if (m_symbol == BARCODE_MAILMARK_2D) {
+            /* Accessing C40_START for MAILMARK_2D not currently in GUI but may be added later */
+            if ((option3() & DM_B256_C40_START_MASK) == DM_C40_START) {
+                arg_int(cmd, "--dmc40=", option1(), true /*allowZero*/);
+            }
         }
 
         if ((m_symbol == BARCODE_DOTCODE || (isDotty() && dotty())) && dotSize() != 0.8f) {
@@ -1494,7 +1502,7 @@ namespace Zint {
         arg_bool(cmd, "--small", !notext && (fontSetting() & SMALL_TEXT));
 
         if (m_symbol == BARCODE_DATAMATRIX || m_symbol == BARCODE_HIBC_DM) {
-            arg_bool(cmd, "--square", (option3() & 0x7F) == DM_SQUARE);
+            arg_bool(cmd, "--square", (option3() & DM_SQUARE_DMRE_MASK) == DM_SQUARE);
         }
 
         if (supportsStructApp()) {

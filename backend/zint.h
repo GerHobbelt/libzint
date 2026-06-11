@@ -212,7 +212,7 @@ extern "C" {
 #define BARCODE_DATAMATRIX      71  /* Data Matrix (ECC200) */
 #define BARCODE_EAN14           72  /* EAN-14 */
 #define BARCODE_VIN             73  /* Vehicle Identification Number */
-#define BARCODE_CODABLOCKF      74  /* Codablock-F */
+#define BARCODE_CODABLOCKF      74  /* Codablock F */
 #define BARCODE_NVE18           75  /* NVE-18 (SSCC-18) */
 #define BARCODE_JAPANPOST       76  /* Japanese Postal Code */
 #define BARCODE_KOREAPOST       77  /* Korea Post */
@@ -244,7 +244,7 @@ extern "C" {
 #define BARCODE_HIBC_QR         104 /* HIBC QR Code */
 #define BARCODE_HIBC_PDF        106 /* HIBC PDF417 */
 #define BARCODE_HIBC_MICPDF     108 /* HIBC MicroPDF417 */
-#define BARCODE_HIBC_BLOCKF     110 /* HIBC Codablock-F */
+#define BARCODE_HIBC_BLOCKF     110 /* HIBC Codablock F */
 #define BARCODE_HIBC_AZTEC      112 /* HIBC Aztec Code */
 
     /* Tbarcode 10 codes */
@@ -324,7 +324,7 @@ extern "C" {
 #define FAST_MODE               0x0080  /* Use faster if less optimal encodation or other shortcuts if available */
                                         /* (affects AZTEC, DATAMATRIX, MICROPDF417, PDF417, QRCODE & UPNQR only) */
 #define EXTRA_ESCAPE_MODE       0x0100  /* Process special symbology-specific escape sequences as well as others */
-                                        /* Note: currently Code 128 only */
+                                        /* Note: currently Aztec Code, Code 128 and Data Matrix only */
 #define GS1SYNTAXENGINE_MODE    0x0200  /* Use the GS1 Syntax Engine (if available) to strictly validate GS1 input */
 #define GS1RAW_MODE             0x0400  /* Process GS1 data literally (no AI delimiters), parsing GSs as FNC1s */
 
@@ -332,9 +332,15 @@ extern "C" {
 #define ZINT_AZTEC_FULL         128     /* Only consider Full versions on automatic symbol size selection */
 
 /* Data Matrix specific options (`symbol->option_3`) */
-#define DM_SQUARE               100     /* Only consider square versions on automatic symbol size selection */
-#define DM_DMRE                 101     /* Consider DMRE versions on automatic symbol size selection */
-#define DM_ISO_144              128     /* Use ISO instead of "de facto" format for 144x144 (i.e. don't skew ECC) */
+/* OR-able, but only one of DM_BASE_256_START/DM_C40_START, and only one of DM_SQUARE/DM_DMRE */
+#define DM_B256_START           0x02    /* Use Base 256 encodation initially, length given in `option_1` (0 = all) */
+#define DM_C40_START            0x08    /* Use C40 encodation initially, length given in `option_1` (0 = all) */
+#define DM_SQUARE               0x64    /* Only consider square versions on automatic symbol size selection */
+#define DM_DMRE                 0x65    /* Consider DMRE versions on automatic symbol size selection */
+#define DM_ISO_144              0x80    /* Use ISO instead of "de facto" format for 144x144 (i.e. don't skew ECC) */
+/* Masks for testing the exclusive pairs above */
+#define DM_B256_C40_START_MASK  0x0A    /* DM_B256_START or DM_C40_START */
+#define DM_SQUARE_DMRE_MASK     0x65    /* DM_SQUARE or DM_DMRE */
 
 /* QR, Han Xin, Grid Matrix specific options (`symbol->option_3`) */
 #define ZINT_FULL_MULTIBYTE     200     /* Enable Kanji/Hanzi compression for Latin-1 & binary data */

@@ -1,6 +1,8 @@
 % ZINT(1) Version 2.16.0.9
 %
-% March 2026
+% April 2026
+
+[//]: # ( vim: set ts=4 sw=4 et : )
 
 # NAME
 
@@ -93,7 +95,7 @@ Paintbrush (`PCX`), Portable Network Format (`PNG`), Scalable Vector Graphic (`S
 
 `--cols=INTEGER`
 
-:   Set the number of data columns in the symbol to *INTEGER*. Affects Codablock-F, DotCode, GS1 DataBar Expanded
+:   Set the number of data columns in the symbol to *INTEGER*. Affects Codablock F, DotCode, GS1 DataBar Expanded
     Stacked (DBAR_EXPSTK), MicroPDF417 and PDF417 symbols.
 
 `--compliantheight`
@@ -110,6 +112,14 @@ Paintbrush (`PCX`), Portable Network Format (`PNG`), Scalable Vector Graphic (`S
 
 :   Send output to stdout, which in most cases should be re-directed to a pipe or a file. Use `--filetype` to specify
     output format.
+
+`--dmb256=INTEGER`
+
+:   For Data Matrix symbols, encode the first *INTEGER* input characters in Base 256 mode. 0 means all input.
+
+`--dmc40=INTEGER`
+
+:   For Data Matrix symbols, encode the first *INTEGER* input characters in C40 mode. 0 means all input.
 
 `--dmiso144`
 
@@ -183,10 +193,10 @@ Paintbrush (`PCX`), Portable Network Format (`PNG`), Scalable Vector Graphic (`S
 
 `--extraesc`
 
-:   For Code 128 only, as well as processing the normal escape sequences above, process the special escape sequences
-    `\^A`, `\^B`, `\^C` and `\^@` that allow manual switching of Code Sets, and the special escape sequence `\^1` that
-    inserts an `FNC1` character. The sequence `\@` turns off manual switching. The sequence `\^^` can be used to
-    encode data that contains special escape sequences.
+:   As well as processing the normal escape sequences above, process the special escape sequences beginning with `\^`.
+    For Aztec Code, Code 128 and Data Matrix, process the escape sequence `\^1` that inserts an `FNC1` character, and
+    the escaping sequence `\^^` that encodes a literal `\^`. For Code 128 only, process the escape sequences `\^A`,
+    `\^B`, `\^C` and `\^@` that allow manual switching of Code Sets. The sequence `\^@` turns off manual switching.
 
 `--fast`
 
@@ -208,8 +218,10 @@ Paintbrush (`PCX`), Portable Network Format (`PNG`), Scalable Vector Graphic (`S
 
 `--gs1`
 
-:   Treat input as GS1 compatible data. Application Identifiers (AIs) should be placed in square brackets `"[]"` (but
-    see `--gs1parens`). Also accepts GS1 Digital Link URIs (unverified) for matrix symbologies.
+:   Treat input as GS1 compatible data. A number of input formats are available. Application Identifiers (AIs) may be
+    placed in square brackets `"[]"`. Alternatively the GS1 Syntax Engine "Unbracketed AI" format may be used, which
+    starts with a caret (`^`) and uses carets to indicate required `FNC1`s. For matrix symbologies, GS1 Digital Link
+    URIs (unverified) may be given. Further input options are available with `--gs1parens` and `--gs1raw`.
 
 `--gs1nocheck`
 
@@ -250,7 +262,7 @@ Paintbrush (`PCX`), Portable Network Format (`PNG`), Scalable Vector Graphic (`S
 
 `--heightperrow`
 
-:   Treat height as per-row. Affects Codablock-F, Code 16K, Code 49, GS1 DataBar Expanded Stacked (DBAR_EXPSTK),
+:   Treat height as per-row. Affects Codablock F, Code 16K, Code 49, GS1 DataBar Expanded Stacked (DBAR_EXPSTK),
     MicroPDF417 and PDF417.
 
 `-i`, `--input=FILE`
@@ -332,7 +344,7 @@ Paintbrush (`PCX`), Portable Network Format (`PNG`), Scalable Vector Graphic (`S
 
 `--rows=INTEGER`
 
-:   Set the number of rows for Codablock-F or PDF417 to *INTEGER*. It will also set the minimum number of rows for
+:   Set the number of rows for Codablock F or PDF417 to *INTEGER*. It will also set the minimum number of rows for
     Code 16K or Code 49, and the maximum number of rows for GS1 DataBar Expanded Stacked (DBAR_EXPSTK).
 
 `--scale=NUMBER`
@@ -408,6 +420,10 @@ Paintbrush (`PCX`), Portable Network Format (`PNG`), Scalable Vector Graphic (`S
 
 :   Adjust the gap between the barcode and the Human Readable Text (HRT). *NUMBER* is in X-dimensions, and may be
     floating-point. Maximum is 10 and minimum is -5. The default is 1.
+
+`--verbose`
+
+:   Output debug information to stdout.
 
 `--vers=INTEGER`
 

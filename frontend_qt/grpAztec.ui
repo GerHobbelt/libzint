@@ -359,13 +359,25 @@ formatted with Application Identifiers (AIs)</string>
       <item row="0" column="2">
        <widget class="QRadioButton" name="radAztecHIBC">
         <property name="text">
-         <string>H&amp;IBC</string>
+         <string>&amp;HIBC</string>
         </property>
         <property name="toolTip">
          <string>Process data as a Health Industry Barcode (HIBC)
 Labeler Identification Code (LIC)
 For Provider Applications Standard (PAS), preface
 the data with a slash &quot;/&quot;</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QRadioButton" name="radAztecExtraEsc">
+        <property name="text">
+         <string>Manual FN&amp;C1s (Extra Escape)</string>
+        </property>
+        <property name="toolTip">
+         <string>Process special escape sequence &quot;\^1&quot;
+allowing manual FNC1s
+(literal &quot;\^&quot; may be escaped with &quot;\^^&quot;)</string>
         </property>
        </widget>
       </item>
@@ -741,7 +753,7 @@ Maximum length 32 and cannot contain spaces
 (ignored if disabled)</string>
         </property>
         <property name="text">
-         <string>I&amp;D:</string>
+         <string>&amp;ID:</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignLeft|Qt::AlignLeading|Qt::AlignVCenter</set>

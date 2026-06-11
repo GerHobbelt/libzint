@@ -1,4 +1,4 @@
-/* codablock.c - Handles Codablock-F */
+/* codablock.c - Handles Codablock F */
 /*
     libzint - the open source barcode library
     Copyright (C) 2016-2026 Harald Oehlmann
@@ -50,7 +50,7 @@
 #define ZTNum    (CodeA | CodeB | CodeC)
 #define ZTFNC1   (CodeA | CodeB | CodeC | CodeFNC1)
 
-/* ASCII-Extension for Codablock-F */
+/* ASCII-Extension for Codablock F */
 #define aFNC1  ((uchar) 128)
 #define aFNC2  ((uchar) 129)
 #define aFNC3  ((uchar) 130)
@@ -513,7 +513,7 @@ static void ASCIIZ128(uchar **ppOutPos, const int CharacterSet, const uchar c1, 
         A2C128_C(ppOutPos, c1, c2);
 }
 
-/* XLate Tables D.2, D.3 and F.1 of Codablock-F Specification and call output
+/* XLate Tables D.2, D.3 and F.1 of Codablock F Specification and call output
  */
 static void SumASCII(uchar **ppOutPos, const int Sum, const int CharacterSet) {
     switch (CharacterSet) {
@@ -535,6 +535,7 @@ static void SumASCII(uchar **ppOutPos, const int Sum, const int CharacterSet) {
 /* Main function called by zint framework
  */
 INTERNAL int zint_codablockf(struct zint_symbol *symbol, unsigned char source[], int length) {
+    static const char stop[7] = { '2','3','3','1','1','1','2' }; /* Stop character */
     int charCur, dataLength;
     int error_number;
     int rows, columns, useColumns;
@@ -859,7 +860,7 @@ INTERNAL int zint_codablockf(struct zint_symbol *symbol, unsigned char source[],
         for (c = 0; c < columns - 1; c++, d += 6) {
             memcpy(d, zint_C128Table[pOutput[rc + c]], 6);
         }
-        memcpy(d, "2331112", 7); /* Stop character (106, not in `zint_C128Table[]`) */
+        memcpy(d, stop, 7); /* Stop character (106, not in `zint_C128Table[]`) */
         d += 7;
         z_expand(symbol, dest, (int) (d - dest));
     }
