@@ -120,7 +120,7 @@ jobs:
     - name: Install Qt6
       uses: jurplel/install-qt-action@v4
       with:
-        version: 6.11.*
+        version: 6.12.*
         dir: .
 
     - name: Create Build Environment
@@ -282,7 +282,7 @@ jobs:
     - name: Configure CMake
       working-directory: build
       shell: bash
-      run: PATH=$PATH:/opt/homebrew/opt/qt@6/bin cmake $GITHUB_WORKSPACE -DCMAKE_C_FLAGS='-I /usr/local/include' -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DZINT_TEST=ON -DZINT_STATIC=ON -DZINT_QT6=ON
+      run: PATH=$PATH:/opt/homebrew/opt/qt@6/bin cmake $GITHUB_WORKSPACE -DCMAKE_C_FLAGS='-I /usr/local/include' -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DZINT_TEST=ON -DZINT_STATIC=ON -DZINT_QT6=ON -DZINT_USE_GS1SE=OFF
 
     - name: Build
       working-directory: build
