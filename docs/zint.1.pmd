@@ -1,6 +1,6 @@
 % ZINT(1) Version 2.16.0.9
 %
-% June 2026
+% July 2026
 
 [//]: # ( vim: set ts=4 sw=4 et : )
 
@@ -285,8 +285,9 @@ Paintbrush (`PCX`), Portable Network Format (`PNG`), Scalable Vector Graphic (`S
 
 **`--mirror`**
 
-:   Use the batch data to determine the filename in batch mode (`--batch`). The `-o` | `--output` option can be used
-    to specify an output directory (any filename will be ignored).
+:   Use the data to determine the filename. This is particularly useful in batch mode (`--batch`), but also works in
+    standard mode. The `-o` | `--output` option can be used to specify an output directory (any filename will be
+    ignored).
 
 **`--mode=`***`INTEGER`*
 
@@ -609,7 +610,7 @@ Paintbrush (`PCX`), Portable Network Format (`PNG`), Scalable Vector Graphic (`S
     `--version`).
 
 `1`
-:   Human Readable Text was truncated (maximum 199 bytes) (`ZINT_WARN_HRT_TRUNCATED`)
+:   Human Readable Text was truncated (maximum 255 bytes) (`ZINT_WARN_HRT_TRUNCATED`)
 
 `2`
 :   Invalid option given but overridden by Zint (`ZINT_WARN_INVALID_OPTION`)
