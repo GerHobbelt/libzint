@@ -1535,8 +1535,11 @@ static FILE *win_fopen(const char *const filename, const char *const mode) {
 }
 #endif /* _WIN32 */
 
-/* Helper to free Windows args on exit */
-static int do_exit(const int error_number) {
+/* Helper to delete `symbol` if non-NULL & free Windows args on exit */
+static int do_exit(struct zint_symbol *symbol, const int error_number) {
+    if (symbol) {
+        ZBarcode_Delete(symbol);
+    }
 #ifdef _WIN32
     win_free_args();
 #endif
@@ -1545,6 +1548,173 @@ static int do_exit(const int error_number) {
 }
 
 struct arg_opt { const char *arg; int opt; };
+
+enum options {
+    OPT_ADDONGAP = 128, OPT_AZFULL,
+    OPT_BATCH, OPT_BG, OPT_BINARY, OPT_BIND, OPT_BIND_TOP, OPT_BOLD, OPT_BORDER, OPT_BOX,
+    OPT_CMYK, OPT_COLS, OPT_COMPLIANTHEIGHT,
+    OPT_DIRECT, OPT_DMISO144, OPT_DMRE, OPT_DMB256, OPT_DMC40, OPT_DOTSIZE, OPT_DOTTY, OPT_DUMP,
+    OPT_ECI, OPT_EMBEDFONT, OPT_ESC, OPT_EXTRAESC, OPT_FAST, OPT_FG, OPT_FILETYPE, OPT_FULLMULTIBYTE,
+    OPT_GS1, OPT_GS1NOCHECK, OPT_GS1PARENS, OPT_GS1RAW, OPT_GS1STRICT /*GS1SYNTAXENGINE_MODE*/,
+    OPT_GSSEP, OPT_GUARDDESCENT, OPT_GUARDWHITESPACE,
+    OPT_HEIGHT, OPT_HEIGHTPERROW, OPT_INIT, OPT_MASK, OPT_MIRROR, OPT_MODE,
+    OPT_NOBACKGROUND, OPT_NOQUIETZONES, OPT_NOTEXT, OPT_PRIMARY, OPT_QUIETZONES,
+    OPT_ROTATE, OPT_ROWS, OPT_SCALE, OPT_SCALEXDIM, OPT_SCMVV, OPT_SECURE,
+    OPT_SEG1, OPT_SEG2, OPT_SEG3, OPT_SEG4, OPT_SEG5, OPT_SEG6, OPT_SEG7, OPT_SEG8, OPT_SEG9,
+    OPT_SEPARATOR, OPT_SMALL, OPT_SQUARE, OPT_STRUCTAPP,
+#ifdef ZINT_TEST
+    OPT_TEST,
+#endif
+    OPT_TEXTGAP, OPT_VERBOSE, OPT_VERS, OPT_VWHITESP, OPT_WERROR
+};
+
+static const struct option long_options[] = {
+    {"addongap", 1, NULL, OPT_ADDONGAP},
+    {"azfull", 0, NULL, OPT_AZFULL},
+    {"barcode", 1, NULL, 'b'},
+    {"batch", 0, NULL, OPT_BATCH},
+    {"bg", 1, 0, OPT_BG},
+    {"bgcolor", 1, 0, OPT_BG}, /* Synonym */
+    {"bgcolour", 1, 0, OPT_BG}, /* Synonym */
+    {"binary", 0, NULL, OPT_BINARY},
+    {"bind", 0, NULL, OPT_BIND},
+    {"bindtop", 0, NULL, OPT_BIND_TOP},
+    {"bold", 0, NULL, OPT_BOLD},
+    {"border", 1, NULL, OPT_BORDER},
+    {"box", 0, NULL, OPT_BOX},
+    {"cmyk", 0, NULL, OPT_CMYK},
+    {"cols", 1, NULL, OPT_COLS},
+    {"compliantheight", 0, NULL, OPT_COMPLIANTHEIGHT},
+    {"data", 1, NULL, 'd'},
+    {"direct", 0, NULL, OPT_DIRECT},
+    {"dmb256", 2, NULL, OPT_DMB256},
+    {"dmc40", 2, NULL, OPT_DMC40},
+    {"dmiso144", 0, NULL, OPT_DMISO144},
+    {"dmre", 0, NULL, OPT_DMRE},
+    {"dotsize", 1, NULL, OPT_DOTSIZE},
+    {"dotty", 0, NULL, OPT_DOTTY},
+    {"dump", 0, NULL, OPT_DUMP},
+    {"eci", 1, NULL, OPT_ECI},
+    {"ecinos", 0, NULL, 'e'},
+    {"embedfont", 0, NULL, OPT_EMBEDFONT},
+    {"esc", 0, NULL, OPT_ESC},
+    {"extraesc", 0, NULL, OPT_EXTRAESC},
+    {"fast", 0, NULL, OPT_FAST},
+    {"fg", 1, 0, OPT_FG},
+    {"fgcolor", 1, 0, OPT_FG}, /* Synonym */
+    {"fgcolour", 1, 0, OPT_FG}, /* Synonym */
+    {"filetype", 1, NULL, OPT_FILETYPE},
+    {"fullmultibyte", 0, NULL, OPT_FULLMULTIBYTE},
+    {"gs1", 0, 0, OPT_GS1},
+    {"gs1nocheck", 0, NULL, OPT_GS1NOCHECK},
+    {"gs1parens", 0, NULL, OPT_GS1PARENS},
+    {"gs1raw", 0, NULL, OPT_GS1RAW},
+    {"gs1strict", 0, NULL, OPT_GS1STRICT /*GS1SYNTAXENGINE_MODE*/},
+    {"gssep", 0, NULL, OPT_GSSEP},
+    {"guarddescent", 1, NULL, OPT_GUARDDESCENT},
+    {"guardwhitespace", 0, NULL, OPT_GUARDWHITESPACE},
+    {"height", 1, NULL, OPT_HEIGHT},
+    {"heightperrow", 0, NULL, OPT_HEIGHTPERROW},
+    {"help", 0, NULL, 'h'},
+    {"init", 0, NULL, OPT_INIT},
+    {"input", 1, NULL, 'i'},
+    {"mask", 1, NULL, OPT_MASK},
+    {"mirror", 0, NULL, OPT_MIRROR},
+    {"mode", 1, NULL, OPT_MODE},
+    {"nobackground", 0, NULL, OPT_NOBACKGROUND},
+    {"noquietzones", 0, NULL, OPT_NOQUIETZONES},
+    {"notext", 0, NULL, OPT_NOTEXT},
+    {"output", 1, NULL, 'o'},
+    {"primary", 1, NULL, OPT_PRIMARY},
+    {"quietzones", 0, NULL, OPT_QUIETZONES},
+    {"reverse", 0, NULL, 'r'},
+    {"rotate", 1, NULL, OPT_ROTATE},
+    {"rows", 1, NULL, OPT_ROWS},
+    {"scale", 1, NULL, OPT_SCALE},
+    {"scalexdimdp", 2, NULL, OPT_SCALEXDIM},
+    {"scmvv", 2, NULL, OPT_SCMVV},
+    {"secure", 1, NULL, OPT_SECURE},
+    {"seg1", 1, NULL, OPT_SEG1},
+    {"seg2", 1, NULL, OPT_SEG2},
+    {"seg3", 1, NULL, OPT_SEG3},
+    {"seg4", 1, NULL, OPT_SEG4},
+    {"seg5", 1, NULL, OPT_SEG5},
+    {"seg6", 1, NULL, OPT_SEG6},
+    {"seg7", 1, NULL, OPT_SEG7},
+    {"seg8", 1, NULL, OPT_SEG8},
+    {"seg9", 1, NULL, OPT_SEG9},
+    {"separator", 1, NULL, OPT_SEPARATOR},
+    {"small", 0, NULL, OPT_SMALL},
+    {"square", 0, NULL, OPT_SQUARE},
+    {"structapp", 1, NULL, OPT_STRUCTAPP},
+#ifdef ZINT_TEST
+    {"test", 0, NULL, OPT_TEST},
+#endif
+    {"textgap", 1, NULL, OPT_TEXTGAP},
+    {"types", 0, NULL, 't'},
+    {"verbose", 0, NULL, OPT_VERBOSE},
+    {"vers", 1, NULL, OPT_VERS},
+    {"version", 0, NULL, 'v'},
+    {"vwhitesp", 1, NULL, OPT_VWHITESP},
+    {"werror", 0, NULL, OPT_WERROR},
+    {"whitesp", 1, NULL, 'w'},
+    {NULL, 0, NULL, 0}
+};
+
+/* Helper to determine if unknown option ambiguous or not */
+#ifdef ZINT_TEST
+static int is_ambiguous_opt(const char *arg, const int test) {
+#else
+static int is_ambiguous_opt(const char *arg) {
+#endif
+    const char *equals_sign;
+    int length;
+    int s = 0, e = ARRAY_SIZE(long_options) - 2; /* Omit NULL entry at end */
+
+#ifdef ZINT_TEST
+/* LCOV_EXCL_START */
+    if (test) {
+        int i;
+        /* Ensure array sorted */
+        for (i = 0; i < e; i++) {
+            if (strcmp(long_options[i].name, long_options[i + 1].name) >= 0) {
+                fprintf(stderr, "is_ambiguous_opt: %d: %s >= %s\n",
+                        i, long_options[i].name, long_options[i + 1].name);
+                assert(0);
+                return 0;
+            }
+        }
+        return 1;
+    }
+/* LCOV_EXCL_STOP */
+#endif
+
+    if (*arg == '-') {
+        arg++;
+        if (*arg == '-') {
+            arg++;
+        }
+    }
+    if ((equals_sign = strchr(arg, '='))) {
+        length = (int) (equals_sign - arg);
+    } else {
+        length = (int) strlen(arg);
+    }
+
+    while (s <= e) {
+        const int m = (s + e) / 2;
+        const int cmp = strncmp(long_options[m].name, arg, length);
+        if (cmp < 0) {
+            s = m + 1;
+        } else if (cmp > 0) {
+            e = m - 1;
+        } else {
+            return 1;
+        }
+    }
+
+    return 0;
+}
 
 #define OPT_ARGS_MAX    300 /* Make greater than 200 (max no. of stacked rows) as that's a better error message */
 
@@ -1598,116 +1768,6 @@ int main(int argc, char **argv) {
 
     opterr = 0; /* Disable `getopt_long_only()` printing errors */
     while (1) {
-        enum options {
-            OPT_ADDONGAP = 128, OPT_AZFULL,
-            OPT_BATCH, OPT_BINARY, OPT_BG, OPT_BIND, OPT_BIND_TOP, OPT_BOLD, OPT_BORDER, OPT_BOX,
-            OPT_CMYK, OPT_COLS, OPT_COMPLIANTHEIGHT,
-            OPT_DIRECT, OPT_DMISO144, OPT_DMRE, OPT_DMB256, OPT_DMC40, OPT_DOTSIZE, OPT_DOTTY, OPT_DUMP,
-            OPT_ECI, OPT_EMBEDFONT, OPT_ESC, OPT_EXTRAESC, OPT_FAST, OPT_FG, OPT_FILETYPE, OPT_FULLMULTIBYTE,
-            OPT_GS1, OPT_GS1NOCHECK, OPT_GS1PARENS, OPT_GS1RAW, OPT_GS1STRICT /*GS1SYNTAXENGINE_MODE*/,
-            OPT_GSSEP, OPT_GUARDDESCENT, OPT_GUARDWHITESPACE,
-            OPT_HEIGHT, OPT_HEIGHTPERROW, OPT_INIT, OPT_MIRROR, OPT_MASK, OPT_MODE,
-            OPT_NOBACKGROUND, OPT_NOQUIETZONES, OPT_NOTEXT, OPT_PRIMARY, OPT_QUIETZONES,
-            OPT_ROTATE, OPT_ROWS, OPT_SCALE, OPT_SCALEXDIM, OPT_SCMVV, OPT_SECURE,
-            OPT_SEG1, OPT_SEG2, OPT_SEG3, OPT_SEG4, OPT_SEG5, OPT_SEG6, OPT_SEG7, OPT_SEG8, OPT_SEG9,
-            OPT_SEPARATOR, OPT_SMALL, OPT_SQUARE, OPT_STRUCTAPP,
-#ifdef ZINT_TEST
-            OPT_TEST,
-#endif
-            OPT_TEXTGAP, OPT_VERBOSE, OPT_VERS, OPT_VWHITESP, OPT_WERROR
-        };
-        static const struct option long_options[] = {
-            {"addongap", 1, NULL, OPT_ADDONGAP},
-            {"azfull", 0, NULL, OPT_AZFULL},
-            {"barcode", 1, NULL, 'b'},
-            {"batch", 0, NULL, OPT_BATCH},
-            {"binary", 0, NULL, OPT_BINARY},
-            {"bg", 1, 0, OPT_BG},
-            {"bgcolor", 1, 0, OPT_BG}, /* Synonym */
-            {"bgcolour", 1, 0, OPT_BG}, /* Synonym */
-            {"bind", 0, NULL, OPT_BIND},
-            {"bindtop", 0, NULL, OPT_BIND_TOP},
-            {"bold", 0, NULL, OPT_BOLD},
-            {"border", 1, NULL, OPT_BORDER},
-            {"box", 0, NULL, OPT_BOX},
-            {"cmyk", 0, NULL, OPT_CMYK},
-            {"cols", 1, NULL, OPT_COLS},
-            {"compliantheight", 0, NULL, OPT_COMPLIANTHEIGHT},
-            {"data", 1, NULL, 'd'},
-            {"direct", 0, NULL, OPT_DIRECT},
-            {"dmb256", 2, NULL, OPT_DMB256},
-            {"dmc40", 2, NULL, OPT_DMC40},
-            {"dmiso144", 0, NULL, OPT_DMISO144},
-            {"dmre", 0, NULL, OPT_DMRE},
-            {"dotsize", 1, NULL, OPT_DOTSIZE},
-            {"dotty", 0, NULL, OPT_DOTTY},
-            {"dump", 0, NULL, OPT_DUMP},
-            {"eci", 1, NULL, OPT_ECI},
-            {"ecinos", 0, NULL, 'e'},
-            {"embedfont", 0, NULL, OPT_EMBEDFONT},
-            {"esc", 0, NULL, OPT_ESC},
-            {"extraesc", 0, NULL, OPT_EXTRAESC},
-            {"fast", 0, NULL, OPT_FAST},
-            {"fg", 1, 0, OPT_FG},
-            {"fgcolor", 1, 0, OPT_FG}, /* Synonym */
-            {"fgcolour", 1, 0, OPT_FG}, /* Synonym */
-            {"filetype", 1, NULL, OPT_FILETYPE},
-            {"fullmultibyte", 0, NULL, OPT_FULLMULTIBYTE},
-            {"gs1", 0, 0, OPT_GS1},
-            {"gs1nocheck", 0, NULL, OPT_GS1NOCHECK},
-            {"gs1parens", 0, NULL, OPT_GS1PARENS},
-            {"gs1raw", 0, NULL, OPT_GS1RAW},
-            {"gs1strict", 0, NULL, OPT_GS1STRICT /*GS1SYNTAXENGINE_MODE*/},
-            {"gssep", 0, NULL, OPT_GSSEP},
-            {"guarddescent", 1, NULL, OPT_GUARDDESCENT},
-            {"guardwhitespace", 0, NULL, OPT_GUARDWHITESPACE},
-            {"height", 1, NULL, OPT_HEIGHT},
-            {"heightperrow", 0, NULL, OPT_HEIGHTPERROW},
-            {"help", 0, NULL, 'h'},
-            {"init", 0, NULL, OPT_INIT},
-            {"input", 1, NULL, 'i'},
-            {"mirror", 0, NULL, OPT_MIRROR},
-            {"mask", 1, NULL, OPT_MASK},
-            {"mode", 1, NULL, OPT_MODE},
-            {"nobackground", 0, NULL, OPT_NOBACKGROUND},
-            {"noquietzones", 0, NULL, OPT_NOQUIETZONES},
-            {"notext", 0, NULL, OPT_NOTEXT},
-            {"output", 1, NULL, 'o'},
-            {"primary", 1, NULL, OPT_PRIMARY},
-            {"quietzones", 0, NULL, OPT_QUIETZONES},
-            {"reverse", 0, NULL, 'r'},
-            {"rotate", 1, NULL, OPT_ROTATE},
-            {"rows", 1, NULL, OPT_ROWS},
-            {"scale", 1, NULL, OPT_SCALE},
-            {"scalexdimdp", 2, NULL, OPT_SCALEXDIM},
-            {"scmvv", 2, NULL, OPT_SCMVV},
-            {"secure", 1, NULL, OPT_SECURE},
-            {"seg1", 1, NULL, OPT_SEG1},
-            {"seg2", 1, NULL, OPT_SEG2},
-            {"seg3", 1, NULL, OPT_SEG3},
-            {"seg4", 1, NULL, OPT_SEG4},
-            {"seg5", 1, NULL, OPT_SEG5},
-            {"seg6", 1, NULL, OPT_SEG6},
-            {"seg7", 1, NULL, OPT_SEG7},
-            {"seg8", 1, NULL, OPT_SEG8},
-            {"seg9", 1, NULL, OPT_SEG9},
-            {"separator", 1, NULL, OPT_SEPARATOR},
-            {"small", 0, NULL, OPT_SMALL},
-            {"square", 0, NULL, OPT_SQUARE},
-            {"structapp", 1, NULL, OPT_STRUCTAPP},
-#ifdef ZINT_TEST
-            {"test", 0, NULL, OPT_TEST},
-#endif
-            {"textgap", 1, NULL, OPT_TEXTGAP},
-            {"types", 0, NULL, 't'},
-            {"verbose", 0, NULL, OPT_VERBOSE},
-            {"vers", 1, NULL, OPT_VERS},
-            {"version", 0, NULL, 'v'},
-            {"vwhitesp", 1, NULL, OPT_VWHITESP},
-            {"werror", 0, NULL, OPT_WERROR},
-            {"whitesp", 1, NULL, 'w'},
-            {NULL, 0, NULL, 0}
-        };
         const int opt = getopt_long_only(argc, argv, "b:d:ehi:o:rtvw:", long_options, NULL);
         if (opt == -1) break;
 
@@ -1715,7 +1775,7 @@ int main(int argc, char **argv) {
             case OPT_ADDONGAP:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 139: Invalid add-on gap value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val >= 7 && val <= 12) {
                     addon_gap = val;
@@ -1756,7 +1816,7 @@ int main(int argc, char **argv) {
             case OPT_BORDER:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 107: Invalid border width value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val <= 100) { /* `val` >= 0 always */
                     my_symbol->border_width = val;
@@ -1775,7 +1835,7 @@ int main(int argc, char **argv) {
             case OPT_COLS:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 131: Invalid columns value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val >= 1 && val <= 200) {
                     my_symbol->option_2 = val;
@@ -1797,7 +1857,7 @@ int main(int argc, char **argv) {
                     val = 0;
                 } else if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 158: Invalid Data Matrix Base 256 mode length value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 /* C40 overrides Base 256 */
                 if ((my_symbol->option_3 & DM_B256_C40_START_MASK) == DM_C40_START) {
@@ -1814,7 +1874,7 @@ int main(int argc, char **argv) {
                     val = 0;
                 } else if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 160: Invalid Data Matrix C40 mode length value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 /* C40 overwrites Base 256 */
                 if ((my_symbol->option_3 & DM_B256_C40_START_MASK) == DM_B256_START) {
@@ -1841,7 +1901,7 @@ int main(int argc, char **argv) {
             case OPT_DOTSIZE:
                 if (!validate_float(optarg, 0 /*allow_neg*/, &float_opt, errbuf)) {
                     fprintf(stderr, "Error 181: Invalid dot radius floating point (%s)\n", errbuf);
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (float_opt >= 0.01f) {
                     my_symbol->dot_size = float_opt;
@@ -1861,7 +1921,7 @@ int main(int argc, char **argv) {
             case OPT_ECI:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 138: Invalid ECI code (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val <= 999999) { /* `val` >= 0 always */
                     my_symbol->eci = val;
@@ -1928,7 +1988,7 @@ int main(int argc, char **argv) {
             case OPT_GUARDDESCENT:
                 if (!validate_float(optarg, 0 /*allow_neg*/, &float_opt, errbuf)) {
                     fprintf(stderr, "Error 182: Invalid guard bar descent floating point (%s)\n", errbuf);
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (float_opt >= 0.0f && float_opt <= 50.0f) {
                     my_symbol->guard_descent = float_opt;
@@ -1945,7 +2005,7 @@ int main(int argc, char **argv) {
             case OPT_HEIGHT:
                 if (!validate_float(optarg, 0 /*allow_neg*/, &float_opt, errbuf)) {
                     fprintf(stderr, "Error 183: Invalid symbol height floating point (%s)\n", errbuf);
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (float_opt >= 0.5f && float_opt <= 2000.0f) {
                     my_symbol->height = float_opt;
@@ -1962,14 +2022,10 @@ int main(int argc, char **argv) {
             case OPT_INIT:
                 my_symbol->output_options |= READER_INIT;
                 break;
-            case OPT_MIRROR:
-                /* Use filenames which reflect content */
-                mirror_mode = 1;
-                break;
             case OPT_MASK:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 148: Invalid mask value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val <= 7) { /* `val` >= 0 always */
                     mask = val + 1;
@@ -1980,10 +2036,14 @@ int main(int argc, char **argv) {
                     warn_number = ZINT_WARN_INVALID_OPTION;
                 }
                 break;
+            case OPT_MIRROR:
+                /* Use filenames which reflect content */
+                mirror_mode = 1;
+                break;
             case OPT_MODE:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 136: Invalid mode value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val <= 6) { /* `val` >= 0 always */
                     my_symbol->option_1 = val;
@@ -2019,7 +2079,7 @@ int main(int argc, char **argv) {
                 /* Only certain inputs allowed */
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 117: Invalid rotation value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 switch (val) {
                     case 0:
@@ -2039,7 +2099,7 @@ int main(int argc, char **argv) {
             case OPT_ROWS:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 132: Invalid rows value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val >= 1 && val <= 90) {
                     rows = val;
@@ -2052,7 +2112,7 @@ int main(int argc, char **argv) {
             case OPT_SCALE:
                 if (!validate_float(optarg, 0 /*allow_neg*/, &float_opt, errbuf)) {
                     fprintf(stderr, "Error 184: Invalid scale floating point (%s)\n", errbuf);
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (float_opt >= 0.01f) {
                     my_symbol->scale = float_opt;
@@ -2066,7 +2126,7 @@ int main(int argc, char **argv) {
             case OPT_SCALEXDIM:
                 if (!validate_scalexdimdp(optarg, &x_dim_mm, &dpmm, errbuf)) {
                     fprintf(stderr, "Error 189: %s\n", errbuf);
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (x_dim_mm > 10.0f || dpmm > 1000.0f) {
                     if (x_dim_mm > 10.0f) {
@@ -2086,7 +2146,7 @@ int main(int argc, char **argv) {
                     val = 96; /* ASC MH10/SC 8 */
                 } else if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 149: Invalid Structured Carrier Message version value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val <= 99) { /* `val` >= 0 always */
                     my_symbol->option_2 = val + 1;
@@ -2101,7 +2161,7 @@ int main(int argc, char **argv) {
             case OPT_SECURE:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 134: Invalid ECC value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val <= 8) { /* `val` >= 0 always */
                     my_symbol->option_1 = val;
@@ -2124,11 +2184,11 @@ int main(int argc, char **argv) {
                     val = opt - OPT_SEG1 + 1; /* Segment number */
                     if (segs[val].source) {
                         fprintf(stderr, "Error 164: Duplicate segment %d\n", val);
-                        return do_exit(ZINT_ERROR_INVALID_OPTION);
+                        return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                     }
                     if (!validate_seg(optarg, opt - OPT_SEG1 + 1, segs, errbuf)) {
                         fprintf(stderr, "Error 166: %s\n", errbuf);
-                        return do_exit(ZINT_ERROR_INVALID_OPTION);
+                        return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                     }
                     if (val >= seg_count) {
                         seg_count = val + 1;
@@ -2142,7 +2202,7 @@ int main(int argc, char **argv) {
             case OPT_SEPARATOR:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 128: Invalid separator value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val <= 4) { /* `val` >= 0 always */
                     separator = val;
@@ -2169,14 +2229,14 @@ int main(int argc, char **argv) {
                 memset(&my_symbol->structapp, 0, sizeof(my_symbol->structapp));
                 if (!validate_structapp(optarg, &my_symbol->structapp, errbuf)) {
                     fprintf(stderr, "Error 155: %s\n", errbuf);
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 break;
 #ifdef ZINT_TEST
 /* LCOV_EXCL_START */
             case OPT_TEST:
                 if (!test()) {
-                    return do_exit(ZINT_ERROR_ENCODING_PROBLEM);
+                    return do_exit(my_symbol, ZINT_ERROR_ENCODING_PROBLEM);
                 }
                 help = 1; /* Mark as help to avoid "No data" warning */
                 break;
@@ -2185,7 +2245,7 @@ int main(int argc, char **argv) {
             case OPT_TEXTGAP:
                 if (!validate_float(optarg, 1 /*allow_neg*/, &float_opt, errbuf)) {
                     fprintf(stderr, "Error 194: Invalid text gap floating point (%s)\n", errbuf);
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (float_opt >= -5.0f && float_opt <= 10.0f) {
                     my_symbol->text_gap = float_opt;
@@ -2202,7 +2262,7 @@ int main(int argc, char **argv) {
             case OPT_VERS:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 133: Invalid version value (digits only)\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val >= 1 && val <= 999) {
                     my_symbol->option_2 = val;
@@ -2215,7 +2275,7 @@ int main(int argc, char **argv) {
             case OPT_VWHITESP:
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 153: Invalid vertical whitespace value '%s' (digits only)\n", optarg);
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val <= 100) { /* `val` >= 0 always */
                     my_symbol->whitespace_height = val;
@@ -2255,7 +2315,7 @@ int main(int argc, char **argv) {
                 if (!validate_int(optarg, -1 /*len*/, &val) && !(val = get_barcode_name(optarg))) {
 #endif
                     fprintf(stderr, "Error 119: Invalid barcode type '%s'\n", optarg);
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 my_symbol->symbology = val;
                 break;
@@ -2263,7 +2323,7 @@ int main(int argc, char **argv) {
             case 'w':
                 if (!validate_int(optarg, -1 /*len*/, &val)) {
                     fprintf(stderr, "Error 120: Invalid horizontal whitespace value '%s' (digits only)\n", optarg);
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (val <= 100) { /* `val` >= 0 always */
                     my_symbol->whitespace_width = val;
@@ -2280,7 +2340,7 @@ int main(int argc, char **argv) {
                 if (batch_mode == 0) {
                     if (data_arg_num == OPT_ARGS_MAX) {
                         fprintf(stderr, "Error 129: Too many data args (maximum %d)\n", OPT_ARGS_MAX);
-                        return do_exit(ZINT_ERROR_INVALID_OPTION);
+                        return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
 
                     }
                     arg_opts[data_arg_num].arg = optarg;
@@ -2298,7 +2358,7 @@ int main(int argc, char **argv) {
                 if (batch_mode == 0 || input_cnt == 0) {
                     if (data_arg_num == OPT_ARGS_MAX) {
                         fprintf(stderr, "Error 130: Too many data args (maximum %d)\n", OPT_ARGS_MAX);
-                        return do_exit(ZINT_ERROR_INVALID_OPTION);
+                        return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
 
                     }
                     arg_opts[data_arg_num].arg = optarg;
@@ -2332,7 +2392,7 @@ int main(int argc, char **argv) {
                         for (i = 0; i < ARRAY_SIZE(long_options) && long_options[i].val != optopt; i++);
                         if (i == ARRAY_SIZE(long_options)) { /* Shouldn't happen */
                             fprintf(stderr, "Error 125: ?? unknown optopt '%d'\n", optopt); /* Not reached */
-                            return do_exit(ZINT_ERROR_ENCODING_PROBLEM);
+                            return do_exit(my_symbol, ZINT_ERROR_ENCODING_PROBLEM);
                         }
                         if (long_options[i].has_arg) {
                             fprintf(stderr, "Error 109: Option '%s' requires an argument\n", arg);
@@ -2342,15 +2402,23 @@ int main(int argc, char **argv) {
                             fprintf(stderr, "Error 126: Option '%.*s' does not take an argument\n", optlen, arg);
                         }
                     } else {
-                        fprintf(stderr, "Error 101: Unknown option '%s'\n", arg);
+#ifdef ZINT_TEST
+                        if (is_ambiguous_opt(arg, 0 /*test*/)) {
+#else
+                        if (is_ambiguous_opt(arg)) {
+#endif
+                            fprintf(stderr, "Error 187: Ambiguous option '%s'\n", arg);
+                        } else {
+                            fprintf(stderr, "Error 101: Unknown option '%s'\n", arg);
+                        }
                     }
                 }
-                return do_exit(ZINT_ERROR_INVALID_OPTION);
+                return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 break;
 
             default: /* Shouldn't happen */
                 fprintf(stderr, "Error 123: ?? getopt error 0%o\n", opt); /* Not reached */
-                return do_exit(ZINT_ERROR_ENCODING_PROBLEM);
+                return do_exit(my_symbol, ZINT_ERROR_ENCODING_PROBLEM);
                 break;
         }
     }
@@ -2444,11 +2512,11 @@ int main(int argc, char **argv) {
             if (seg_count) {
                 if (data_arg_num > 1) {
                     fprintf(stderr, "Error 170: Cannot specify segments and multiple data arguments together\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 if (arg_opts[0].opt != 'd') { /* For simplicity disallow input args for now */
                     fprintf(stderr, "Error 171: Cannot use input argument with segment arguments\n");
-                    return do_exit(ZINT_ERROR_INVALID_OPTION);
+                    return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                 }
                 segs[0].eci = my_symbol->eci;
                 segs[0].source = ZUCP(arg_opts[0].arg);
@@ -2456,7 +2524,7 @@ int main(int argc, char **argv) {
                 for (i = 0; i < seg_count; i++) {
                     if (segs[i].source == NULL) {
                         fprintf(stderr, "Error 172: Segments must be consecutive - segment %d missing\n", i);
-                        return do_exit(ZINT_ERROR_INVALID_OPTION);
+                        return do_exit(my_symbol, ZINT_ERROR_INVALID_OPTION);
                     }
                 }
             }
@@ -2538,7 +2606,7 @@ int main(int argc, char **argv) {
 
     ZBarcode_Delete(my_symbol);
 
-    return do_exit(error_number ? error_number : warn_number);
+    return do_exit(NULL /*symbol*/, error_number ? error_number : warn_number);
 }
 
 #ifdef ZINT_TEST
@@ -3361,6 +3429,7 @@ static int test_utf8_to_wide(void) {
 static int test(void) {
     int ret = 1;
     ret &= get_barcode_name(NULL, 1 /*test*/);
+    ret &= is_ambiguous_opt(NULL, 1 /*test*/);
     ret &= test_cpy_str();
     ret &= test_ncpy_str();
     ret &= test_cpycat_str();
