@@ -2552,14 +2552,6 @@ static const char *testUtilBwippName(int index, const struct zint_symbol *symbol
             }
             return NULL;
         }
-    } else if (symbology == BARCODE_AZTEC) {
-        if (option_1 > 0 && option_2 > 0) {
-            if (debug & ZINT_DEBUG_TEST_PRINT) {
-                printf("i:%d %s not BWIPP compatible, cannot specify both option_1 %d and option_2 %d\n",
-                        index, testUtilBarcodeName(symbology), option_1, option_2);
-            }
-            return NULL;
-        }
     } else if (symbology == BARCODE_RMQR) {
         if (option_2 < 1) {
             if (debug & ZINT_DEBUG_TEST_PRINT) {

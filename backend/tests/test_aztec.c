@@ -4442,7 +4442,7 @@ static void test_encode(const testCtx *const p_ctx) {
                     "001100010010010"
                     "011110110011000"
                 },
-        /*138*/ { BARCODE_AZTEC, ESCAPE_MODE, 899, -1, -1, 1, -1, { 0, 0, "" }, "\\xC3\\x95\\xAB", -1, 0, 15, 15, 1, 1, "Blank top row",
+        /*138*/ { BARCODE_AZTEC, ESCAPE_MODE, 899, -1, 1, 1, -1, { 0, 0, "" }, "\\xC3\\x95\\xAB", -1, 0, 15, 15, 1, 1, "Blank top row",
                     "000000000000000"
                     "001111111011111"
                     "001100001010111"
@@ -4459,7 +4459,7 @@ static void test_encode(const testCtx *const p_ctx) {
                     "111101100110011"
                     "011100110010101"
                 },
-        /*139*/ { BARCODE_AZTEC, ESCAPE_MODE | FAST_MODE, 899, -1, -1, 1, -1, { 0, 0, "" }, "\\xC3\\x95\\xAB", -1, 0, 15, 15, 1, 1, "Blank top row",
+        /*139*/ { BARCODE_AZTEC, ESCAPE_MODE | FAST_MODE, 899, -1, 1, 1, -1, { 0, 0, "" }, "\\xC3\\x95\\xAB", -1, 0, 15, 15, 1, 1, "Blank top row",
                     "000000000000000"
                     "001111111011111"
                     "001100001010111"

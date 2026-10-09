@@ -946,7 +946,7 @@ INTERNAL int zint_composite(struct zint_symbol *symbol, unsigned char source[], 
 
     /* Hack to initialize `warn_number` to warning (if any) returned by `zint_gs1_verify()` */
     warn_number = symbol->warn_level >> 8;
-    symbol->warn_level &= 0xFF;
+    symbol->warn_level &= WARN_LEVEL_MASK;
     assert(warn_number < ZINT_ERROR);
 
     /* Perform sanity checks on input options first */

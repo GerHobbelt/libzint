@@ -4312,7 +4312,7 @@ static void test_input(const testCtx *const p_ctx) {
     testFinish();
 }
 
-/* #181 Christian Hartlage OSS-Fuzz and #300 Andre Maute */
+/* #181 Christian Hartlage OSS-Fuzz, and #300 & #359 Andre Maute */
 static void test_fuzz(const testCtx *const p_ctx) {
     int debug = p_ctx->debug;
 
@@ -4320,6 +4320,7 @@ static void test_fuzz(const testCtx *const p_ctx) {
         int symbology;
         int input_mode;
         int option_1;
+        int warn_level;
         const char *data;
         int length;
         const char *composite;
@@ -4330,21 +4331,22 @@ static void test_fuzz(const testCtx *const p_ctx) {
     };
     /* s/\/\*[ 0-9]*\*\//\=printf("\/\*%3d*\/", line(".") - line("'<")): */
     static const struct item data[] = {
-        /*  0*/ { BARCODE_EAN13_CC, -1, -1, "+123456789012345678", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 18 too long (maximum 5) (linear component)", "" },
-        /*  1*/ { BARCODE_EANX_CC, -1, -1, "+123456789012345678", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 18 too long (maximum 5) (linear component)", "" },
-        /*  2*/ { BARCODE_UPCA_CC, -1, -1, "+123456789012345678", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 18 too long (maximum 5) (linear component)", "" },
-        /*  3*/ { BARCODE_UPCE_CC, -1, -1, "+123456789012345678", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 18 too long (maximum 5) (linear component)", "" },
-        /*  4*/ { BARCODE_EAN8_CC, -1, -1, "+12345", -1, "[21]A12345678", ZINT_WARN_NONCOMPLIANT , 0, "Warning 292: EAN-8 with add-on is non-standard (linear component)", "BWIPP checks for proper EAN data" },
-        /*  5*/ { BARCODE_EANX_CC, -1, -1, "+12345", -1, "[21]A12345678", ZINT_WARN_NONCOMPLIANT , 0, "Warning 292: EAN-8 with add-on is non-standard (linear component)", "BWIPP checks for proper EAN data" },
-        /*  6*/ { BARCODE_EAN8_CC, -1, -1, "+123456", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 6 too long (maximum 5) (linear component)", "" },
-        /*  7*/ { BARCODE_EANX_CC, -1, -1, "+123456", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 6 too long (maximum 5) (linear component)", "" },
-        /*  8*/ { BARCODE_EAN8_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, "kks", -1, "()111%", ZINT_ERROR_INVALID_DATA, 1, "Error 284: Invalid character at position 1 in input (digits and \"+\" or space only) (linear component)", "" }, /* #300 (#5), Andre Maute (`dbar_date()` not checking length + other non-checks) */
-        /*  9*/ { BARCODE_EANX_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, "kks", -1, "()111%", ZINT_ERROR_INVALID_DATA, 1, "Error 284: Invalid character at position 1 in input (digits and \"+\" or space only) (linear component)", "" }, /* #300 (#5), Andre Maute (`dbar_date()` not checking length + other non-checks) */
-        /* 10*/ { BARCODE_UPCA_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, "\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\225\215\153\153\153\153\153\153\263\153\153\153\153\153\153\153\153\153\153\163", -1, "()90", ZINT_ERROR_TOO_LONG, 1, "Error 283: Input length 46 too long (maximum 19) (linear component)", "" }, /* #300 (#6), Andre Maute (`dbar_date()` not checking length + other non-checks) */
-        /* 11*/ { BARCODE_UPCA_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, "\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\225\215\153\153\153\153\153\153\263\153\153\377\002\000\000\153\153\153\153\163\000\000\000\153\153\153\153\153\153\153\060\047\047\043\047\057\153\153\153\153\153\000\000\000\000\153\153\153\161\153\153\153\153\153\153\153\153\153\153\153\153\153\167\167\167\167\167\167\167\167\167\167\167\167\167\167\167\167\001\100\000\000\000\000\000\000\000\167\167\167\167\167\167\167\167\167\167\167\167\167\167", 127, "()904OOOOO)CK0336680OOOOOOOOOOOOOO29[0kkkk%%%%(", ZINT_ERROR_INVALID_DATA, 1, "Error 253: Malformed AI in input (brackets don't match) (2D component)", "" }, /* #300 (#11), Andre Maute (`gs1_verify()` not checking length on resolve AI data loop) */
-        /* 12*/ { BARCODE_EANX_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, "\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\225\215\153\153\153\153\153\153\263\153\153\377\002\000\000\153\153\153\153\163\000\000\000\153\153\153\153\153\153\153\060\047\047\043\047\057\153\153\153\153\153\000\000\000\000\153\153\153\161\153\153\153\153\153\153\153\153\153\153\153\153\153\167\167\167\167\167\167\167\167\167\167\167\167\167\167\167\167\001\100\000\000\000\000\000\000\000\167\167\167\167\167\167\167\167\167\167\167\167\167\167", 127, "()904OOOOO)CK0336680OOOOOOOOOOOOOO29[0kkkk%%%%(", ZINT_ERROR_INVALID_DATA, 1, "Error 253: Malformed AI in input (brackets don't match) (2D component)", "" }, /* #300 (#11 with EANX_CC) */
-        /* 13*/ { BARCODE_GS1_128_CC, GS1NOCHECK_MODE, 3, "[]28", -1, "[]RRR___________________KKKRRR0000", 0, 1, "", "" }, /* #300 (#13), Andre Maute (`calc_padding_ccc()` dividing by zero when linear width == 68) */
-        /* 14*/ { BARCODE_GS1_128_CC, GS1NOCHECK_MODE, 3, "[]2", -1, "[]RRR___________________KKKRRR0000", 0, 1, "", "" }, /* #300 (#13 shortened to min linear input (but same linear width 68)) */
+        /*  0*/ { BARCODE_EAN13_CC, -1, -1, -1, "+123456789012345678", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 18 too long (maximum 5) (linear component)", "" },
+        /*  1*/ { BARCODE_EANX_CC, -1, -1, -1, "+123456789012345678", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 18 too long (maximum 5) (linear component)", "" },
+        /*  2*/ { BARCODE_UPCA_CC, -1, -1, -1, "+123456789012345678", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 18 too long (maximum 5) (linear component)", "" },
+        /*  3*/ { BARCODE_UPCE_CC, -1, -1, -1, "+123456789012345678", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 18 too long (maximum 5) (linear component)", "" },
+        /*  4*/ { BARCODE_EAN8_CC, -1, -1, -1, "+12345", -1, "[21]A12345678", ZINT_WARN_NONCOMPLIANT , 0, "Warning 292: EAN-8 with add-on is non-standard (linear component)", "BWIPP checks for proper EAN data" },
+        /*  5*/ { BARCODE_EANX_CC, -1, -1, -1, "+12345", -1, "[21]A12345678", ZINT_WARN_NONCOMPLIANT , 0, "Warning 292: EAN-8 with add-on is non-standard (linear component)", "BWIPP checks for proper EAN data" },
+        /*  6*/ { BARCODE_EAN8_CC, -1, -1, -1, "+123456", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 6 too long (maximum 5) (linear component)", "" },
+        /*  7*/ { BARCODE_EANX_CC, -1, -1, -1, "+123456", -1, "[21]A12345678", ZINT_ERROR_TOO_LONG, 1, "Error 297: Input add-on length 6 too long (maximum 5) (linear component)", "" },
+        /*  8*/ { BARCODE_EAN8_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, -1, "kks", -1, "()111%", ZINT_ERROR_INVALID_DATA, 1, "Error 284: Invalid character at position 1 in input (digits and \"+\" or space only) (linear component)", "" }, /* #300 (#5), Andre Maute (`dbar_date()` not checking length + other non-checks) */
+        /*  9*/ { BARCODE_EANX_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, -1, "kks", -1, "()111%", ZINT_ERROR_INVALID_DATA, 1, "Error 284: Invalid character at position 1 in input (digits and \"+\" or space only) (linear component)", "" }, /* #300 (#5), Andre Maute (`dbar_date()` not checking length + other non-checks) */
+        /* 10*/ { BARCODE_UPCA_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, -1, "\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\225\215\153\153\153\153\153\153\263\153\153\153\153\153\153\153\153\153\153\163", -1, "()90", ZINT_ERROR_TOO_LONG, 1, "Error 283: Input length 46 too long (maximum 19) (linear component)", "" }, /* #300 (#6), Andre Maute (`dbar_date()` not checking length + other non-checks) */
+        /* 11*/ { BARCODE_UPCA_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, -1, "\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\225\215\153\153\153\153\153\153\263\153\153\377\002\000\000\153\153\153\153\163\000\000\000\153\153\153\153\153\153\153\060\047\047\043\047\057\153\153\153\153\153\000\000\000\000\153\153\153\161\153\153\153\153\153\153\153\153\153\153\153\153\153\167\167\167\167\167\167\167\167\167\167\167\167\167\167\167\167\001\100\000\000\000\000\000\000\000\167\167\167\167\167\167\167\167\167\167\167\167\167\167", 127, "()904OOOOO)CK0336680OOOOOOOOOOOOOO29[0kkkk%%%%(", ZINT_ERROR_INVALID_DATA, 1, "Error 253: Malformed AI in input (brackets don't match) (2D component)", "" }, /* #300 (#11), Andre Maute (`gs1_verify()` not checking length on resolve AI data loop) */
+        /* 12*/ { BARCODE_EANX_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, -1, "\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\225\215\153\153\153\153\153\153\263\153\153\377\002\000\000\153\153\153\153\163\000\000\000\153\153\153\153\153\153\153\060\047\047\043\047\057\153\153\153\153\153\000\000\000\000\153\153\153\161\153\153\153\153\153\153\153\153\153\153\153\153\153\167\167\167\167\167\167\167\167\167\167\167\167\167\167\167\167\001\100\000\000\000\000\000\000\000\167\167\167\167\167\167\167\167\167\167\167\167\167\167", 127, "()904OOOOO)CK0336680OOOOOOOOOOOOOO29[0kkkk%%%%(", ZINT_ERROR_INVALID_DATA, 1, "Error 253: Malformed AI in input (brackets don't match) (2D component)", "" }, /* #300 (#11 with EANX_CC) */
+        /* 13*/ { BARCODE_GS1_128_CC, GS1NOCHECK_MODE, 3, -1, "[]28", -1, "[]RRR___________________KKKRRR0000", 0, 1, "", "" }, /* #300 (#13), Andre Maute (`calc_padding_ccc()` dividing by zero when linear width == 68) */
+        /* 14*/ { BARCODE_GS1_128_CC, GS1NOCHECK_MODE, 3, -1, "[]2", -1, "[]RRR___________________KKKRRR0000", 0, 1, "", "" }, /* #300 (#13 shortened to min linear input (but same linear width 68)) */
+        /* 15*/ { BARCODE_UPCA_CC, GS1PARENS_MODE | GS1NOCHECK_MODE, -1, 1802201856, "\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\153\225\215\153\153\153\153\153\153\263\153\153\153\153\153\153\153\153\153\153\163\000\000\000\153\153\153\153\153\153\153\060\047\047\043\047\057\153\153\153\153\153\000\000\000\000\153\153\153\161\153\153\153\153\153\153\153\153\153\153\153\153\153\167\167\167\167\167\167\167\167\167\167\167\167\167\167\167\167\000\100\001\000\000\000\000\000\000\167\167\167\167\167\167\167\167\167\167\167\167\167\167", 127, "()90", ZINT_ERROR_TOO_LONG, 1, "Error 283: Input length 46 too long (maximum 19) (linear component)", "" }, /* #359, Andre Maute (assert(warn_level < ZINT_ERROR)) */
     };
     const int data_size = ARRAY_SIZE(data);
     int i, length, composite_length, ret;
@@ -4366,6 +4368,9 @@ static void test_fuzz(const testCtx *const p_ctx) {
 
         length = testUtilSetSymbol(symbol, data[i].symbology, data[i].input_mode, -1 /*eci*/,
                                     data[i].option_1, -1, -1, -1 /*output_options*/, data[i].data, -1, debug);
+        if (data[i].warn_level != -1) {
+            symbol->warn_level = data[i].warn_level;
+        }
         assert_zero(length >= 128, "i:%d length %d >= 128\n", i, length);
         strcpy(symbol->primary, data[i].data);
 

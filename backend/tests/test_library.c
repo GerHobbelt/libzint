@@ -2306,7 +2306,9 @@ static void test_error_tag(const testCtx *const p_ctx) {
         if (testContinue(p_ctx, i)) continue;
 
         if (data[i].debug_test) symbol->debug |= ZINT_DEBUG_TEST;
-        symbol->warn_level = data[i].warn_level;
+        if (data[i].warn_level != -1) {
+            symbol->warn_level = data[i].warn_level;
+        }
 
         ret = zint_test_error_tag(data[i].error_number, symbol, -1, data[i].data);
         assert_equal(ret, data[i].ret, "i:%d ret %d != %d\n", i, ret, data[i].ret);

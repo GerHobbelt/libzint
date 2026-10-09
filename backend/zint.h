@@ -361,6 +361,7 @@ extern "C" {
 /* Warning level (`symbol->warn_level`) */
 #define WARN_DEFAULT            0  /* Default behaviour */
 #define WARN_FAIL_ALL           2  /* Treat warning as error */
+#define WARN_LEVEL_MASK         2  /* Mask of valid values */
 
 /* Capability flags (ZBarcode_Cap() `cap_flag`) */
 #define ZINT_CAP_HRT                0x0001  /* Prints Human Readable Text? */
