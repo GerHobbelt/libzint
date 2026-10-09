@@ -1152,7 +1152,7 @@ int ZBarcode_Encode_Segs(struct zint_symbol *symbol, const struct zint_seg segs[
     if (symbol->border_width < 0 || symbol->border_width > 100) {
         return error_tag(ZINT_ERROR_INVALID_OPTION, symbol, 768, "Border width out of range (0 to 100)");
     }
-    if ((symbol->warn_level & WARN_LEVEL_MASK) != WARN_LEVEL_MASK) {
+    if (symbol->warn_level & ~WARN_LEVEL_MASK) {
         symbol->warn_level = WARN_DEFAULT; /* Silently reset */
     }
 
